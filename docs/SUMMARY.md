@@ -8,4 +8,4 @@
 # Diagrams
 
 - [ERD](diagrams/erd.md)
-- [Creating Order](diagrams/create_order_seq.md)
+- [Creating Order](diagrams/create_order.md)
