@@ -1,0 +1,23 @@
+[book]
+title = "Distributed Order Processing System"
+authors = ["dinno<tahadlrb7@gmail.com>"]
+language = "en"
+src = "."
+
+[build]
+build-dir = "book"
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+[output]
+
+[output.html]
+no-section-label = true
+additional-js = [
+  "additionals/mermaid.min.js",
+  "additionals/svg-pan-zoom.min.js",
+  "additionals/mermaid-init.js",
+]
