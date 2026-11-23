@@ -22,3 +22,12 @@ dev:
 # Serve document and watch changes
 docbuild:
     mdbook build {{ DOCS_PRODUCT_PATH }}
+
+# Generate Prisma Client
+dbgen:
+  pnpm prisma generate
+
+# Run development migrations and regenerate Prisma Client
+dbmig name="":
+  pnpm prisma migrate dev {{if name != "" {"--name {{name}}"} else {""}}}
+  just dbgen
