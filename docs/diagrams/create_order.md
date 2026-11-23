@@ -2,7 +2,7 @@
 
 ## Store the order
 
-The PostgreSQL calls represent work delegated through repository ports and Products data access. `TransactionManager.runTx` supplies the single transaction context used for the request claim, product reads, order writes, and outbox entry.
+The PostgreSQL calls represent work delegated through repository ports and product data access. `TransactionManager.runTx` supplies the single transaction context used for the request claim, product reads, order writes, and outbox entry.
 
 ```mermaid
 sequenceDiagram
@@ -28,7 +28,7 @@ sequenceDiagram
         API->>DB: Read product data
         alt Products and quantities are valid
             API->>DB: Insert order and item snapshots
-            API->>DB: Stage evt.order.created in outbox
+            API->>DB: Stage evt.order.created with amountMinor in order_outbox
             API->>DB: COMMIT
             API-->>Client: 201 with order ID and PENDING_PAYMENT
         else Invalid product or quantity
@@ -42,16 +42,16 @@ sequenceDiagram
 
 ## Relay outbox messages
 
-The relay uses `TransactionManager.runTx` and the outbox persistence adapter to claim and update a row in one transaction.
+Orders and Payments each run this loop against their own outbox table.
 
 ```mermaid
 sequenceDiagram
-    participant Relay as Outbox relay
-    participant DB as PostgreSQL
+    participant Relay as Module relay
+    participant DB as Module outbox
     participant Topic as x.topic
 
     loop Poll due messages
-        Relay->>DB: BEGIN, select one due unpublished row FOR UPDATE SKIP LOCKED
+        Relay->>DB: BEGIN, select one due row FOR UPDATE SKIP LOCKED
         alt No row
             Relay->>DB: COMMIT
             Note over Relay: Back off before the next poll
@@ -59,7 +59,7 @@ sequenceDiagram
             DB-->>Relay: Message and stable message ID
             Relay->>Topic: Publish persistent, mandatory message
             alt Confirmed without a return
-                Relay->>DB: Set published_at and COMMIT
+                Relay->>DB: Delete row and COMMIT
             else Return, negative confirm, or timeout
                 Relay->>DB: Delay next publication and COMMIT
             end

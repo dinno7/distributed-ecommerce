@@ -1,6 +1,6 @@
 # Payment, fulfillment, and retry
 
-Each database transaction shown below runs through `TransactionManager.runTx`. Repository adapters and Products data access use the same transaction context for all operations within that boundary.
+Each database transaction shown below runs through `TransactionManager.runTx`. Repository adapters and product data access use the same transaction context for all operations within that boundary.
 
 ## Checkout and payment
 
@@ -9,38 +9,50 @@ sequenceDiagram
     actor Client
     participant Orders as Orders API and consumer
     participant DB as PostgreSQL
-    participant Relay as Outbox relay
+    participant OrderRelay as Orders relay
+    participant PaymentRelay as Payments relay
     participant MQ as x.topic
-    participant Pay as Payments worker and mock gateway
-    participant Audit as q.audit
-
-    Relay->>MQ: evt.order.created
-    MQ->>Pay: Deliver via q.payments
-    MQ->>Audit: Deliver via evt.#
-    Pay->>DB: Create payment and checkout URL, stage PaymentStarted, commit
+    participant Pay as Payments
+    OrderRelay->>MQ: Publish evt.order.created from order_outbox
+    MQ->>Pay: Deliver via q.payments.process
+    Pay->>DB: Create attempt 1 and stage PaymentStarted in payment_outbox
+    DB-->>Pay: Commit
     Pay->>MQ: Acknowledge
 
     loop Until the checkout URL is ready
         Client->>Orders: GET /orders/:id/payment
         Orders-->>Client: PENDING or AWAITING_CUSTOMER with URL
     end
-    Client->>Pay: Open mock checkout URL
-    Client->>Pay: POST mock callback with simulated result
-    Pay->>DB: Settle once and stage payment outcome, then commit
-    Pay-->>Client: Payment result
+    loop Settle the initial checkout or a retry
+        PaymentRelay->>MQ: Publish PaymentStarted from payment_outbox
+        MQ->>Orders: Deliver via q.orders.payment
+        Orders->>DB: Record newer attempt, restore pending state, commit
+        Orders->>MQ: Acknowledge
 
-    Relay->>MQ: evt.payment.succeeded or evt.payment.failed
-    MQ->>Orders: Deliver via q.orders.payment
-    MQ->>Audit: Deliver via evt.#
-    alt Payment succeeded
-        Orders->>DB: Set FULFILLING, queue items and commands, commit
-    else Payment declined or timed out
-        Orders->>DB: Set PAYMENT_FAILED and items SKIPPED, stage OrderFailed, commit
+        Client->>Pay: POST mock callback for this payment ID
+        Pay->>DB: Settle the attempt and stage outcome in payment_outbox
+        DB-->>Pay: Commit
+        Pay-->>Client: Payment result
+
+        PaymentRelay->>MQ: Publish payment outcome from payment_outbox
+        MQ->>Orders: Deliver via q.orders.payment
+        alt Latest attempt succeeded
+            Orders->>DB: Set FULFILLING, queue items and commands, commit
+        else Latest attempt declined or timed out
+            Orders->>DB: Set PAYMENT_FAILED and items SKIPPED, stage OrderFailed, commit
+        end
+        Orders->>MQ: Acknowledge
+
+        opt Customer retries the failed attempt
+            Client->>Pay: POST /orders/:id/payment/retry with failedPaymentId
+            Pay->>DB: Lock failed attempt, insert successor and stage PaymentStarted
+            DB-->>Pay: Commit payment and payment_outbox
+            Pay-->>Client: 201 with new payment ID
+        end
     end
-    Orders->>MQ: Acknowledge
 ```
 
-[Checkout and callback API](../contracts.md#checkout-and-callback)
+Payments uses its attempt rows to recognize retries and redeliveries. Orders uses the attempt number to handle duplicate or out-of-order payment events, including an outcome that arrives before `PaymentStarted`. [Retry API](../contracts.md#retry-payment) · [Payment transaction rules](../design.md#process-payment)
 
 ## Item fulfillment and retry
 
@@ -51,7 +63,7 @@ sequenceDiagram
     actor Client
     participant API
     participant DB as PostgreSQL
-    participant Relay as Outbox relay
+    participant Relay as Orders relay
     participant MQ as RabbitMQ
     participant Digital as Digital worker
     participant Physical as Physical worker
