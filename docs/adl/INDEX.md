@@ -1,10 +1,8 @@
 # Architecture Decision Log (ADL)
 
-This log records Awair's architecture decisions, the reasons behind them, and
-their trade-offs.
+| Record                                           | Decision                                                  | Status   |
+| ------------------------------------------------ | --------------------------------------------------------- | -------- |
+| [ADR-0001](adr/0001-use-3-layer-architecture.md) | Use 3-Layer NestJS Architecture With Selective Decoupling | Accepted |
+| [ADR-0002](adr/0002-use-prisma-as-data-layer.md) | Use Prisma directly as data layer                         | Accepted |
 
-| Record | Decision | Status |
-| ------ | -------- | ------ |
-
-Use the [ADR template](template.md) when adding a decision. Keep records concise
-and focus on the context, decision, and consequences.
+Use the [ADR template](template.md) for new decisions.
