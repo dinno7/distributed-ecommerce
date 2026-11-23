@@ -10,6 +10,7 @@ import appConfig, { validate } from './config';
       load: [appConfig],
       validate,
     }),
+    PersistenceModule,
   ],
   controllers: [AppController],
   providers: [],
