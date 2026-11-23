@@ -1,64 +1,70 @@
-## Store new order to process
+# Creating an order
+
+## Store the order
+
+The PostgreSQL calls represent work delegated through repository ports and Products data access. `TransactionManager.runTx` supplies the single transaction context used for the request claim, product reads, order writes, and outbox entry.
 
 ```mermaid
 sequenceDiagram
-actor C as Client
-participant S as Server
-participant DB as Database
+    actor Client
+    participant API
+    participant DB as PostgreSQL
 
-C->>S: POST /orders<br/>X-IDEMPOTENCY-KEY<br/>items[]
+    Client->>API: POST /orders with X-Idempotency-Key
+    API->>API: Validate and hash the normalized request
+    API->>DB: BEGIN and INSERT order_request ON CONFLICT DO NOTHING
 
-activate S
-S->>DB: Begin TX
-S->>DB: Check idempotency key(INSERT ON CONFLICT DO NOTHING)
-
-alt key already existed
-    DB-->>S: No row inserted
-    S->>DB: Take orderId via idempotency key(Lock for update)
-    DB-->>S: Existing order
-    alt Completed & matching hash
-        S->>DB: COMMIT
-        S-->>C: 201 { orderId, status }
-    else Still IN_PROGRESS or hash mismatch
-        S->>DB: ROLLBACK
-        S-->>C: 409 Conflict
-    end
-else New key inserted
-    DB-->>S: idempotency key inserted
-    S->>DB: Get product
-    DB-->>S: Product
-    S->>S: Calculating price & validate stock/prices & Compute server-side totals
-    S->>DB: Insert Order(PENDING_PAYMENT) & Order items
-    S->>DB: Insert order_outbox(OrderCreated)
-    S->>DB: Set idempotency key status to COMPLETED
-    S->>DB: COMMIT
-    DB-->>S: Committed
-    S-->>C: 201 { orderId, status: "PENDING_PAYMENT" }
-end
-deactivate S
-```
-
-## Queue pending orders to process
-
-```mermaid
-sequenceDiagram
-participant W as Worker
-participant DB as Database
-participant RQ as RabbitMQ
-loop Every poll interval (with backoff if empty)
-    W->DB: Begin TX
-    W->>DB: SELECT * FROM order_outbox WHERE published_at IS NULL<br/>FOR UPDATE SKIP LOCKED<br/>LIMIT N
-    DB-->>W: Locked batch of outbox
-
-    alt batch has order
-        loop for each event
-            W->>RQ: Publish message
-            RQ-->>W: Ack
-            W->>DB: UPDATE order_outbox SET published_at = NOW()
+    alt Key already exists
+        API->>DB: Read the request in a new statement
+        DB-->>API: Order ID and request hash
+        alt Same request hash
+            API->>DB: COMMIT
+            API-->>Client: Replay 201 with original order ID and PENDING_PAYMENT
+        else Different request hash
+            API->>DB: ROLLBACK
+            API-->>Client: 409 IDEMPOTENCY_KEY_CONFLICT
+        end
+    else Key claimed
+        API->>DB: Read product data
+        alt Products and quantities are valid
+            API->>DB: Insert order and item snapshots
+            API->>DB: Stage evt.order.created in outbox
+            API->>DB: COMMIT
+            API-->>Client: 201 with order ID and PENDING_PAYMENT
+        else Invalid product or quantity
+            API->>DB: ROLLBACK
+            API-->>Client: 400
         end
     end
-    W->DB: COMMIT
-end
-
-
 ```
+
+[Create-order transaction](../design.md#create-an-order-idempotently)
+
+## Relay outbox messages
+
+The relay uses `TransactionManager.runTx` and the outbox persistence adapter to claim and update a row in one transaction.
+
+```mermaid
+sequenceDiagram
+    participant Relay as Outbox relay
+    participant DB as PostgreSQL
+    participant Topic as x.topic
+
+    loop Poll due messages
+        Relay->>DB: BEGIN, select one due unpublished row FOR UPDATE SKIP LOCKED
+        alt No row
+            Relay->>DB: COMMIT
+            Note over Relay: Back off before the next poll
+        else Row claimed
+            DB-->>Relay: Message and stable message ID
+            Relay->>Topic: Publish persistent, mandatory message
+            alt Confirmed without a return
+                Relay->>DB: Set published_at and COMMIT
+            else Return, negative confirm, or timeout
+                Relay->>DB: Delay next publication and COMMIT
+            end
+        end
+    end
+```
+
+[Delivery and recovery](../design.md#delivery-and-recovery)
