@@ -31,3 +31,7 @@ dbgen:
 dbmig name="":
   pnpm prisma migrate dev {{if name != "" {"--name {{name}}"} else {""}}}
   just dbgen
+
+# Run seeds
+dbseed:
+ pnpm prisma db seed
