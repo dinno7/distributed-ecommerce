@@ -18,4 +18,10 @@ describe('AppController', () => {
       expect(appController.health()).toBe('Ok');
     });
   });
+
+  describe('ping', () => {
+    it('should return pong', () => {
+      expect(appController.health()).toBe('pong');
+    });
+  });
 });
