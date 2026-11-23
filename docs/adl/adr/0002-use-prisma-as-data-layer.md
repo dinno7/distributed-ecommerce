@@ -1,6 +1,6 @@
 # ADR-0002: Use Prisma as data layer
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0004](0004-use-selective-hexagonal-architecture.md)
 - **Date:** 2026-11-22
 
 ## Context

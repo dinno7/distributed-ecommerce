@@ -1,6 +1,6 @@
 # ADR-0001: Use 3-Layer NestJS Architecture With Selective Decoupling
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0004](0004-use-selective-hexagonal-architecture.md)
 - **Date:** 2026-11-22
 
 ## Context
