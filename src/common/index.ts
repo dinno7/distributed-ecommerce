@@ -4,5 +4,7 @@ export * from './infra/interceptors/response.interceptor';
 export * from './infra/persistence/persistence.module';
 export * from './infra/persistence/prisma.service';
 export * from './infra/persistence/prisma.tx-manager';
+export * from './infra/retry/retry.module';
+export * from './ports/retrier.port';
 export * from './ports/transaction.port';
 export * from './types';
