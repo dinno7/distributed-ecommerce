@@ -1,8 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { ResponseInterceptor } from './common/infra/interceptors/response.interceptor';
-import { PrismaExceptionFilter } from './common/infra/exception-filters/prisma-exception.filter';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ResponseInterceptor, PrismaExceptionFilter } from './common';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
@@ -18,6 +17,11 @@ async function bootstrap() {
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableShutdownHooks(); // runs onModuleDestroy → $disconnect db
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    defaultVersion: '1',
+    type: VersioningType.URI,
+  });
 
   const config = app.get(ConfigService);
   await app.listen(config.getOrThrow<number>('app.port'));
