@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import appConfig, { validate } from './config';
+import { ProductsModule } from './modules/products/products.module';
+import { PersistenceModule } from './common';
 
 @Module({
   imports: [
