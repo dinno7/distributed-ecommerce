@@ -1,0 +1,8 @@
+name: dev
+variables:
+  - name: base_url
+    value: http://localhost:7000/api
+    description: ""
+  - name: apiv1
+    value: "{{base_url}}/v1"
+    description: ""
