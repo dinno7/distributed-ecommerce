@@ -1,0 +1,53 @@
+import { Injectable } from '@nestjs/common';
+import {
+  OutboxRecord,
+  OutboxRelayRepository,
+} from '../../../../common/messaging/ports/outbox.repositor';
+import { PrismaService } from '../../../../common';
+
+@Injectable()
+export class OrderOutboxRepository implements OutboxRelayRepository {
+  constructor(private readonly db: PrismaService) {}
+
+  async claimBatch(limit: number): Promise<OutboxRecord[]> {
+    const result = await this.db.$queryRaw<OutboxRecord[]>`
+      WITH claimed AS (
+        SELECT * FROM order_outbox
+        WHERE
+          status = 'PENDING'
+          AND
+          next_attempt_at <= NOW()
+          ORDER BY created_at ASC
+          LIMIT ${limit}
+          FOR UPDATE SKIP LOCKED
+      )
+      UPDATE order_outbox o
+      SET
+      attempts = o.attempts + 1,
+      next_attempt_at = NOW() + INTERVAL '30 seconds'
+      WHERE o.id = claimed.id
+      RETURNING o.id, o.routing_key as "routingKey", o.created_at AS "occurredAt", o.payload;`;
+    return result;
+  }
+
+  async markPublished(id: string): Promise<void> {
+    await this.db.orderOutbox.update({
+      where: { id },
+      data: {
+        status: 'PUBLISHED',
+      },
+    });
+    return;
+  }
+
+  async markFailed(id: string, retryAfterMs: number): Promise<void> {
+    await this.db.orderOutbox.update({
+      where: { id },
+      data: {
+        status: 'FAILED',
+        nextAttemptAt: new Date(Date.now() + retryAfterMs),
+      },
+    });
+    return;
+  }
+}
