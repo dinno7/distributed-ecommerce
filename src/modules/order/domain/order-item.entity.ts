@@ -1,4 +1,4 @@
-import type { ProductType } from '../../product/entities/product.entity';
+import type { ProductType } from '../../../common/types/product-type';
 
 export const OrderItemStatus = {
   PENDING: 'PENDING',
