@@ -25,7 +25,7 @@ model Order {
   updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
   items       OrderItem[]
-  // outbox      OrderOutbox[]
+  outbox      OrderOutbox[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
@@ -55,26 +55,26 @@ model OrderItem {
   @@map("order_items")
 }
 
-// enum OutboxStatus {
-//   PENDING
-//   PUBLISHED
-//   FAILED
-// }
-// model OrderOutbox {
-//   id            String       @id @db.Uuid
-//   orderId       String       @map("order_id") @db.Uuid
-//   routingKey    String       @map("routing_key")
-//   payload       Json         @db.JsonB
-//   status        OutboxStatus @default(PENDING)
-//   attempts      Int          @default(0)
-//   nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz
-//   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
-//   publishedAt     DateTime   @map("published_at") @db.Timestamptz
-//
-//   order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-//
-//   @@index([status, nextAttemptAt])
-//   @@index([orderId])
-//   @@map("orders_outbox")
-// }
-//
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+model OrderOutbox {
+  id            String       @id @db.Uuid
+  orderId       String       @map("order_id") @db.Uuid
+  routingKey    String       @map("routing_key")
+  payload       Json         @db.JsonB
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  publishedAt   DateTime?    @map("published_at") @db.Timestamptz
+
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([orderId])
+  @@map("orders_outbox")
+}
