@@ -40,7 +40,7 @@ describe('OrderRepositoryPrisma', () => {
 
     await module
       .get(TransactionManager)
-      .runTx((transaction) => repository.create(order, transaction));
+      .run((transaction) => repository.create(order, transaction));
 
     expect(tx.order.create).toHaveBeenCalledWith({
       data: {

@@ -3,5 +3,5 @@ export interface TransactionCtx {
 }
 
 export abstract class TransactionManager {
-  abstract runTx<T>(fn: (tx: TransactionCtx) => Promise<T>): Promise<T>;
+  abstract run<T>(fn: (tx: TransactionCtx) => Promise<T>): Promise<T>;
 }
