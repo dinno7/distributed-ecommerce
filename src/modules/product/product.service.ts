@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { PrismaService } from '../../common';
+import { PrismaService, TransactionCtx } from '../../common';
 import type {
   CatalogProduct,
   ProductCatalog,
@@ -81,8 +81,12 @@ export class ProductService implements ProductCatalog {
     return ProductMapper.toDomain(row, row.inventory?.available);
   }
 
-  async findByIds(ids: readonly string[]): Promise<readonly CatalogProduct[]> {
-    const rows = await this.prisma.product.findMany({
+  async findByIdsTx(
+    ids: readonly string[],
+    tx: TransactionCtx,
+  ): Promise<readonly CatalogProduct[]> {
+    const db = tx as Prisma.TransactionClient;
+    const rows = await db.product.findMany({
       where: { id: { in: [...ids] } },
       select: {
         id: true,

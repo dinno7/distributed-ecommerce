@@ -1,5 +1,6 @@
 import type { JsonValue } from '../types/json';
 import type { ProductType } from '../types/product-type';
+import { TransactionCtx } from './transaction.port';
 
 export interface CatalogProduct {
   readonly id: string;
@@ -11,7 +12,8 @@ export interface CatalogProduct {
 }
 
 export abstract class ProductCatalog {
-  abstract findByIds(
+  abstract findByIdsTx(
     ids: readonly string[],
+    tx: TransactionCtx,
   ): Promise<readonly CatalogProduct[]>;
 }

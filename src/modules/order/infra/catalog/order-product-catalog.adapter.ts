@@ -4,6 +4,7 @@ import type {
   OrderCatalogProduct,
   OrderProductCatalog,
 } from '../../app/ports/order-product-catalog.port';
+import { TransactionCtx } from '../../../../common';
 
 @Injectable()
 export class OrderProductCatalogAdapter implements OrderProductCatalog {
@@ -11,8 +12,9 @@ export class OrderProductCatalogAdapter implements OrderProductCatalog {
 
   async findByIds(
     ids: readonly string[],
+    tx: TransactionCtx,
   ): Promise<readonly OrderCatalogProduct[]> {
-    const products = await this.catalog.findByIds(ids);
+    const products = await this.catalog.findByIdsTx(ids, tx);
 
     return products.map(({ id, type, ...product }) => ({
       ...product,
