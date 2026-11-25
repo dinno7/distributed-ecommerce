@@ -1,13 +1,20 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
+import { TransactionManager } from '../../../../common/ports/transaction.port';
 import { ProductType } from '../../../../common/types/product-type';
 import { OrderModule } from '../../order.module';
+import { OrderOutboxRelay } from '../outbox.relay';
 import { OrderProductCatalog } from '../ports/order-product-catalog.port';
 import { CreateOrderUC } from './create-order.uc';
 
 describe('CreateOrderUC catalog checks', () => {
   const findMany = jest.fn();
+  const tx = {
+    product: { findMany },
+    order: { create: jest.fn() },
+    orderOutbox: { create: jest.fn() },
+  };
   const mug = {
     id: '019338a0-0000-7000-8000-00000000000a',
     type: ProductType.PHYSICAL,
@@ -32,7 +39,12 @@ describe('CreateOrderUC catalog checks', () => {
       imports: [PersistenceModule, OrderModule],
     })
       .overrideProvider(PrismaService)
-      .useValue({ product: { findMany } })
+      .useValue({
+        $transaction: (run: (transaction: typeof tx) => Promise<unknown>) =>
+          run(tx),
+      })
+      .overrideProvider(OrderOutboxRelay)
+      .useValue({})
       .compile();
     useCase = module.get(CreateOrderUC);
   });
@@ -75,9 +87,10 @@ describe('CreateOrderUC catalog checks', () => {
   it('exposes catalog details through the Orders port', async () => {
     findMany.mockResolvedValueOnce([book, mug]);
 
+    const catalog = module.get(OrderProductCatalog);
     const products = await module
-      .get(OrderProductCatalog)
-      .findByIds([book.id, mug.id]);
+      .get(TransactionManager)
+      .run((transaction) => catalog.findByIds([book.id, mug.id], transaction));
 
     expect(products).toMatchObject([
       {

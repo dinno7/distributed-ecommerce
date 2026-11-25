@@ -1,5 +1,4 @@
 import { OrderCreatedEvent } from '../../../../common/contracts/messages';
-import { ROUTING_KEYS } from '../../../../common/contracts/routing-keys';
 import type { TransactionCtx } from '../../../../common/ports/transaction.port';
 import { OrderOutboxRepositoryPrisma } from './order-outbox.repository';
 
@@ -8,7 +7,7 @@ describe('OrderOutboxRepositoryPrisma', () => {
     const create = jest.fn();
     const tx = { orderOutbox: { create } };
     const repository = new OrderOutboxRepositoryPrisma();
-    const event = new OrderCreatedEvent(ROUTING_KEYS.OrderCreated, {
+    const event = new OrderCreatedEvent({
       orderId: '019338a0-0000-7000-8000-00000000000a',
       customerId: '019338a0-0000-7000-8000-00000000000b',
       totalMinor: '850',

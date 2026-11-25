@@ -2,6 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
 import { TransactionManager } from '../../../../common/ports/transaction.port';
+import { OrderOutboxRelay } from '../../app/outbox.relay';
 import { OrderRepository } from '../../app/ports/order.repository';
 import { OrderItemStatus } from '../../domain/order-item.entity';
 import { Order, OrderStatus } from '../../domain/order.entity';
@@ -23,6 +24,8 @@ describe('OrderRepositoryPrisma', () => {
         $transaction: (run: (transaction: typeof tx) => Promise<unknown>) =>
           run(tx),
       })
+      .overrideProvider(OrderOutboxRelay)
+      .useValue({})
       .compile();
     repository = module.get(OrderRepository);
   });
