@@ -63,3 +63,5 @@ book
 
 # Bruno
 Thumbs.db
+/public/apidocs/index.html
+/public/docs

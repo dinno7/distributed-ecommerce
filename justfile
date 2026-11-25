@@ -35,3 +35,52 @@ dbmig name="":
 # Run seeds
 dbseed:
  pnpm prisma db seed
+# Generate documents & api docs
+@docsgen:
+  #! /bin/sh
+  source_dir="{{source_dir()}}"
+  api_docs_dir="$source_dir/docs/api"
+  docs_dir="$source_dir/docs"
+
+  generated_dir="$source_dir/public"
+  bruno_tmp="$generated_dir/apidocs/index.html.tmp"
+  bruno="$generated_dir/apidocs/index.html"
+  documents_out="$generated_dir/docs"
+
+  if ! command -v mdbook >/dev/null 2>&1; then
+    echo "mdbook doesn't exists"
+    just mdbookInstall
+  fi
+
+  if ! command -v mdbook-mermaid >/dev/null 2>&1; then
+    echo "mdbook-mermaid doesn't exists"
+    just mdbookMermaidInstall
+  fi
+
+  mdbook build -d "$documents_out" "$docs_dir"
+
+  if ! command -v bru >/dev/null 2>&1; then
+    echo "Bruno cli doesn't exists"
+    just installBruno
+  fi
+
+  cd "$api_docs_dir" && \
+    bru docs generate --envs 'dev' -o "$bruno_tmp" && \
+    cat $bruno_tmp | sed 's/https:\/\/cdn.usebruno.com\/api-docs/\/apidocs/g' > "$bruno" && \
+    rm "$bruno_tmp"
+
+alias gendocs := docsgen
+[private]
+[confirm("Do you want install bruno cli?(y/n)")]
+installBruno:
+ npm install -g @usebruno/cli
+
+[private]
+[confirm("Do you want install mdbook?(y/n)")]
+mdbookInstall:
+ cargo install mdbook --locked
+
+[private]
+[confirm("Do you want install mdbook-mermaid?(y/n)")]
+mdbookMermaidInstall:
+ cargo install mdbook-mermaid --locked

@@ -17,7 +17,9 @@ async function bootstrap() {
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableShutdownHooks(); // runs onModuleDestroy → $disconnect db
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['/'],
+  });
   app.enableVersioning({
     defaultVersion: '1',
     type: VersioningType.URI,
