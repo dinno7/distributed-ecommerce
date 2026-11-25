@@ -32,6 +32,17 @@ class EnvironmentVariables {
     message: 'DATABASE_URL must be a postgresql:// connection string',
   })
   DATABASE_URL: string;
+
+  @IsOptional()
+  @Matches(/^postgres(ql)?:\/\//, {
+    message: 'TEST_DATABASE_URL must be a postgresql:// connection string',
+  })
+  TEST_DATABASE_URL?: string;
+
+  @Matches(/^amqp(ql)?:\/\//, {
+    message: 'RABBITMQ_URL must be a amqp:// connection string',
+  })
+  RABBITMQ_URL: string;
 }
 
 // 2. Runs once at startup. A missing or invalid variable stops the app here,
@@ -59,4 +70,6 @@ export default registerAs('app', () => ({
   env: process.env.NODE_ENV ?? Environment.DEV,
   port: parseInt(process.env.PORT ?? '3000', 10),
   databaseUrl: process.env.DATABASE_URL as string,
+  testDatabaseUrl: process.env.TEST_DATABASE_URL as string,
+  rabbitmqUrl: process.env.RABBITMQ_URL as string,
 }));
