@@ -12,7 +12,7 @@ export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
   async claimBatch(limit: number): Promise<OutboxRecord[]> {
     const result = await this.db.$queryRaw<OutboxRecord[]>`
       WITH claimed AS (
-        SELECT * FROM order_outbox
+        SELECT * FROM orders_outbox
         WHERE
           status = 'PENDING'
           AND
@@ -21,10 +21,11 @@ export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
           LIMIT ${limit}
           FOR UPDATE SKIP LOCKED
       )
-      UPDATE order_outbox o
+      UPDATE orders_outbox o
       SET
-      attempts = o.attempts + 1,
-      next_attempt_at = NOW() + INTERVAL '30 seconds'
+        attempts = o.attempts + 1,
+        next_attempt_at = NOW() + INTERVAL '30 seconds'
+      FROM claimed
       WHERE o.id = claimed.id
       RETURNING o.id, o.routing_key as "routingKey", o.created_at AS "occurredAt", o.payload;`;
     return result;
