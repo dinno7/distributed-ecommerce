@@ -1,7 +1,9 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { MessagePublisher } from '../ports/message-publisher.port';
 import { EventMessage } from '../../types/event-message';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class RabbitMQTopicPublisher implements MessagePublisher {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
