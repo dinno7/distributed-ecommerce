@@ -37,6 +37,10 @@ export class Order {
     return this.#items;
   }
 
+  get itemsCount(): number {
+    return this.#items.length;
+  }
+
   get totalMinor(): bigint {
     return this.#totalMinor;
   }
