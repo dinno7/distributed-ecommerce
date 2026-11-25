@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { UseCase } from '../../../../common/ports/usecase.port';
 import { ProductType } from '../../../../common/types/product-type';
 import { Order } from '../../domain/order.entity';
 import { OrderProductCatalog } from '../ports/order-product-catalog.port';
 import {
-  MessagePublisher,
   OrderCreatedEvent,
   TransactionCtx,
   TransactionManager,
@@ -42,7 +41,9 @@ export class CreateOrderUC implements UseCase<CreateOrderInput, Order> {
 
       for (const { productId, quantity } of items) {
         const product = productsById.get(productId.toLowerCase());
-        if (!product) throw new Error(`Product ${productId} not found`);
+        if (!product) {
+          throw new NotFoundException(`Product ${productId} not found`);
+        }
         if (
           product.productType === ProductType.PHYSICAL &&
           quantity > (product.availableStock ?? 0)

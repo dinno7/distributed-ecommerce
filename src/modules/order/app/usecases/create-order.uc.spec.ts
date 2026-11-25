@@ -102,7 +102,7 @@ describe('CreateOrderUC catalog checks', () => {
     ]);
   });
 
-  it('rejects a product missing from the catalog', async () => {
+  it('returns a bad request error for a product missing from the catalog', async () => {
     findMany.mockResolvedValueOnce([]);
 
     await expect(
@@ -110,7 +110,10 @@ describe('CreateOrderUC catalog checks', () => {
         customerId: 'customer',
         items: [{ productId: mug.id, quantity: 1 }],
       }),
-    ).rejects.toThrow(`Product ${mug.id} not found`);
+    ).rejects.toMatchObject({
+      message: `Product ${mug.id} not found`,
+      response: { statusCode: 404 },
+    });
   });
 
   it('rejects a physical quantity above available stock', async () => {
