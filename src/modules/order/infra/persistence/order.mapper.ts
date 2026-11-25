@@ -7,7 +7,7 @@ export class OrderMapper {
   ): Order {
     return new Order(
       row.id,
-      row.customerId,
+      row.userId,
       row.status,
       row.totalMinor,
       row.currency,
@@ -20,7 +20,7 @@ export class OrderMapper {
   static toPersistence(order: Order): Prisma.OrderCreateInput {
     return {
       id: order.id,
-      customerId: order.customerId,
+      userId: order.customerId,
       status: order.status,
       totalMinor: order.totalMinor,
       currency: order.currency,

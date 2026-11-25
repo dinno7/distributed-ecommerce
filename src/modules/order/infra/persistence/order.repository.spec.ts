@@ -45,7 +45,7 @@ describe('OrderRepositoryPrisma', () => {
     expect(tx.order.create).toHaveBeenCalledWith({
       data: {
         id: order.id,
-        customerId: order.customerId,
+        userId: order.customerId,
         status: order.status,
         totalMinor: order.totalMinor,
         currency: order.currency,
@@ -80,8 +80,10 @@ describe('OrderRepositoryPrisma', () => {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
+    const { customerId, ...orderFields } = row;
     findUnique.mockResolvedValueOnce({
-      ...row,
+      ...orderFields,
+      userId: customerId,
       items: [{ ...item, orderId: row.id }],
     });
 
