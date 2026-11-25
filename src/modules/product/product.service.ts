@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common';
+import type {
+  CatalogProduct,
+  ProductCatalog,
+} from '../../common/ports/product-catalog.port';
 import { Money } from '../../common/value-objects/money';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { CreateProductDto } from './dto/create-product.dto';
@@ -9,7 +13,7 @@ import { ProductErrors } from './product.errors';
 import { ProductMapper } from './product.mapper';
 
 @Injectable()
-export class ProductService {
+export class ProductService implements ProductCatalog {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateProductDto): Promise<Product> {
@@ -75,6 +79,25 @@ export class ProductService {
     });
     if (!row) throw ProductErrors.notFound();
     return ProductMapper.toDomain(row, row.inventory?.available);
+  }
+
+  async findByIds(ids: readonly string[]): Promise<readonly CatalogProduct[]> {
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: [...ids] } },
+      select: {
+        id: true,
+        type: true,
+        unitPriceMinor: true,
+        subscriptionDays: true,
+        digitalMetadata: true,
+        inventory: { select: { available: true } },
+      },
+    });
+
+    return rows.map(({ inventory, ...product }) => ({
+      ...product,
+      availableStock: inventory?.available ?? null,
+    }));
   }
 
   async remove(id: string): Promise<void> {
