@@ -7,11 +7,12 @@ import { PrismaTransactionManager } from './prisma.tx-manager.js';
 @Module({
   providers: [
     PrismaService,
+    PrismaTransactionManager,
     {
       provide: TransactionManager,
       useClass: PrismaTransactionManager,
     },
   ],
-  exports: [PrismaService, TransactionManager],
+  exports: [PrismaService, TransactionManager, PrismaTransactionManager],
 })
 export class PersistenceModule {}
