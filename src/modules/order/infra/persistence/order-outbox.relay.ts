@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../../../common';
 
 @Injectable()
-export class OrderOutboxRepository implements OutboxRelayRepository {
+export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
   constructor(private readonly db: PrismaService) {}
 
   async claimBatch(limit: number): Promise<OutboxRecord[]> {
