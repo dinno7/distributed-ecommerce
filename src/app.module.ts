@@ -4,7 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import appConfig, { validate } from './config';
 import { ProductModule } from './modules/product/product.module';
 import { PersistenceModule } from './common';
-import { OrderModule } from './order/order.module';
+import { OrderModule } from './modules/order/order.module';
+import { IdempotencyModule } from '@nestjs/idempotency';
+import { PrismaIdempotencyStore } from './common';
 
 @Module({
   imports: [
@@ -13,11 +15,15 @@ import { OrderModule } from './order/order.module';
       load: [appConfig],
       validate,
     }),
+    IdempotencyModule.forRoot({
+      scope: false,
+    }),
+
     PersistenceModule,
     ProductModule,
     OrderModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [PrismaIdempotencyStore],
 })
 export class AppModule {}

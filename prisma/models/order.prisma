@@ -1,0 +1,80 @@
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum OrderItemStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+
+model Order {
+  id          String      @id @db.Uuid
+  userId  String      @map("user_id") @db.Uuid
+  status      OrderStatus @default(PENDING_PAYMENT)
+  totalMinor  BigInt      @map("total_minor")
+  currency    String      @db.Char(3)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  items       OrderItem[]
+  // outbox      OrderOutbox[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String          @id @db.Uuid
+  orderId        String          @map("order_id") @db.Uuid
+  productId      String          @map("product_id") @db.Uuid
+  productType    ProductType     @map("product_type")
+  quantity       Int
+  unitPriceMinor BigInt          @map("unit_price_minor")
+  status         OrderItemStatus @default(PENDING)
+  attempts       Int             @default(0)
+  claimedBy      String?         @map("claimed_by")
+  leaseExpiresAt DateTime?       @map("lease_expires_at") @db.Timestamptz
+  lastError      String?         @map("last_error")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([status, leaseExpiresAt])
+  @@map("order_items")
+}
+
+// enum OutboxStatus {
+//   PENDING
+//   PUBLISHED
+//   FAILED
+// }
+// model OrderOutbox {
+//   id            String       @id @db.Uuid
+//   orderId       String       @map("order_id") @db.Uuid
+//   routingKey    String       @map("routing_key")
+//   payload       Json         @db.JsonB
+//   status        OutboxStatus @default(PENDING)
+//   attempts      Int          @default(0)
+//   nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz
+//   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+//   publishedAt     DateTime   @map("published_at") @db.Timestamptz
+//
+//   order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+//
+//   @@index([status, nextAttemptAt])
+//   @@index([orderId])
+//   @@map("orders_outbox")
+// }
+//
