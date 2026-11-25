@@ -14,7 +14,8 @@ import { IdempotencyModule } from '@nestjs/idempotency';
 import { PrismaIdempotencyStore } from './common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
+import { MessagingModule } from './common/messaging/messaging.module';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { NextFunction, Request, Response } from 'express';
         fallthrough: false,
       },
     }),
-    // MessagingModule,
+    MessagingModule,
     PersistenceModule,
     ProductModule,
     OrderModule,
