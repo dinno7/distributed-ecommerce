@@ -10,7 +10,7 @@ describe('AppController (e2e)', () => {
   beforeAll(async () => {
     jest.replaceProperty(process, 'env', {
       ...process.env,
-      DATABASE_URL: 'postgresql://localhost/snapshop_test',
+      DATABASE_URL: 'postgresql://localhost/distributed-ecommerce_test',
       RABBITMQ_URL: 'amqp://localhost',
     });
     const { AppModule } = await import('../src/app.module.js');
