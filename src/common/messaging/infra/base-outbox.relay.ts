@@ -1,6 +1,6 @@
 import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { MessagePublisher } from '../ports/message-publisher.port';
-import { EventMessage } from '../../';
+import { EventMessage } from '../../domain/value-objects/event-message.vo';
 import { OutboxRelayRepository } from '../ports/outbox.repositor';
 
 export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {

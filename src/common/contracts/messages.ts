@@ -1,4 +1,4 @@
-import { EventMessage } from '../';
+import { EventMessage } from '../domain/value-objects/event-message.vo';
 import { ROUTING_KEYS } from './routing-keys';
 
 export interface OrderCreatedEventPayload {
@@ -89,7 +89,8 @@ export class PaymentStartedEvent extends EventMessage<PaymentStartedEventPayload
 export interface PaymentSucceededEventPayload {
   orderId: string;
   paymentId: string;
-  providerRef: string;
+  attemptNo: number;
+  providerRef?: string;
   amountMinor: string;
   currency: string;
 }
@@ -105,6 +106,7 @@ export class PaymentSucceededEvent extends EventMessage<PaymentSucceededEventPay
 export interface PaymentFailedEventPayload {
   orderId: string;
   paymentId: string;
+  attemptNo: number;
   errorCode: string;
   reason: string;
 }
