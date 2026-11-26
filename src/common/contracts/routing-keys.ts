@@ -1,4 +1,6 @@
-export enum ROUTING_KEYS {
+import { QUEUES } from './queues';
+
+export const enum ROUTING_KEYS {
   OrderCreated = 'evt.order.created',
   OrderRetryScheduled = 'evt.order.retry_scheduled',
   OrderCompleted = 'evt.order.completed',
@@ -22,4 +24,6 @@ export enum ROUTING_KEYS {
   GrantDigital = 'cmd.digital.grant',
   ActivateSubscription = 'cmd.subscription.activate',
   FulfillPhysical = 'cmd.physical.fulfill',
+
+  PaymentProcessDlq = `${QUEUES.PaymentProcess}.dlq`,
 }

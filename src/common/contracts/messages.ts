@@ -10,8 +10,10 @@ export interface OrderCreatedEventPayload {
 }
 
 export class OrderCreatedEvent extends EventMessage<OrderCreatedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.OrderCreated;
+
   constructor(payload: OrderCreatedEventPayload) {
-    super(payload, ROUTING_KEYS.OrderCreated);
+    super(payload, OrderCreatedEvent.ROUTING_KEY);
   }
 }
 
@@ -23,8 +25,10 @@ export interface OrderRetryScheduledEventPayload {
 }
 
 export class OrderRetryScheduledEvent extends EventMessage<OrderRetryScheduledEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.OrderRetryScheduled;
+
   constructor(payload: OrderRetryScheduledEventPayload) {
-    super(payload, ROUTING_KEYS.OrderRetryScheduled);
+    super(payload, OrderRetryScheduledEvent.ROUTING_KEY);
   }
 }
 
@@ -34,8 +38,10 @@ export interface OrderCompletedEventPayload {
 }
 
 export class OrderCompletedEvent extends EventMessage<OrderCompletedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.OrderCompleted;
+
   constructor(payload: OrderCompletedEventPayload) {
-    super(payload, ROUTING_KEYS.OrderCompleted);
+    super(payload, OrderCompletedEvent.ROUTING_KEY);
   }
 }
 
@@ -46,8 +52,10 @@ export interface OrderPartiallyFailedEventPayload {
 }
 
 export class OrderPartiallyFailedEvent extends EventMessage<OrderPartiallyFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.OrderPartiallyFailed;
+
   constructor(payload: OrderPartiallyFailedEventPayload) {
-    super(payload, ROUTING_KEYS.OrderPartiallyFailed);
+    super(payload, OrderPartiallyFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -57,8 +65,10 @@ export interface OrderFailedEventPayload {
 }
 
 export class OrderFailedEvent extends EventMessage<OrderFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.OrderFailed;
+
   constructor(payload: OrderFailedEventPayload) {
-    super(payload, ROUTING_KEYS.OrderFailed);
+    super(payload, OrderFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -69,8 +79,10 @@ export interface PaymentStartedEventPayload {
 }
 
 export class PaymentStartedEvent extends EventMessage<PaymentStartedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PaymentStarted;
+
   constructor(payload: PaymentStartedEventPayload) {
-    super(payload, ROUTING_KEYS.PaymentStarted);
+    super(payload, PaymentStartedEvent.ROUTING_KEY);
   }
 }
 
@@ -83,8 +95,10 @@ export interface PaymentSucceededEventPayload {
 }
 
 export class PaymentSucceededEvent extends EventMessage<PaymentSucceededEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PaymentSucceeded;
+
   constructor(payload: PaymentSucceededEventPayload) {
-    super(payload, ROUTING_KEYS.PaymentSucceeded);
+    super(payload, PaymentSucceededEvent.ROUTING_KEY);
   }
 }
 
@@ -96,8 +110,10 @@ export interface PaymentFailedEventPayload {
 }
 
 export class PaymentFailedEvent extends EventMessage<PaymentFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PaymentFailed;
+
   constructor(payload: PaymentFailedEventPayload) {
-    super(payload, ROUTING_KEYS.PaymentFailed);
+    super(payload, PaymentFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -109,8 +125,10 @@ export interface PaymentTimedOutEventPayload {
 }
 
 export class PaymentTimedOutEvent extends EventMessage<PaymentTimedOutEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PaymentTimedOut;
+
   constructor(payload: PaymentTimedOutEventPayload) {
-    super(payload, ROUTING_KEYS.PaymentTimedOut);
+    super(payload, PaymentTimedOutEvent.ROUTING_KEY);
   }
 }
 
@@ -120,8 +138,10 @@ export interface DigitalStartedEventPayload {
 }
 
 export class DigitalStartedEvent extends EventMessage<DigitalStartedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.DigitalStarted;
+
   constructor(payload: DigitalStartedEventPayload) {
-    super(payload, ROUTING_KEYS.DigitalStarted);
+    super(payload, DigitalStartedEvent.ROUTING_KEY);
   }
 }
 
@@ -133,8 +153,10 @@ export interface DigitalSucceededEventPayload {
 }
 
 export class DigitalSucceededEvent extends EventMessage<DigitalSucceededEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.DigitalSucceeded;
+
   constructor(payload: DigitalSucceededEventPayload) {
-    super(payload, ROUTING_KEYS.DigitalSucceeded);
+    super(payload, DigitalSucceededEvent.ROUTING_KEY);
   }
 }
 
@@ -147,8 +169,10 @@ export interface DigitalFailedEventPayload {
 }
 
 export class DigitalFailedEvent extends EventMessage<DigitalFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.DigitalFailed;
+
   constructor(payload: DigitalFailedEventPayload) {
-    super(payload, ROUTING_KEYS.DigitalFailed);
+    super(payload, DigitalFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -158,8 +182,10 @@ export interface SubscriptionStartedEventPayload {
 }
 
 export class SubscriptionStartedEvent extends EventMessage<SubscriptionStartedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionStarted;
+
   constructor(payload: SubscriptionStartedEventPayload) {
-    super(payload, ROUTING_KEYS.SubscriptionStarted);
+    super(payload, SubscriptionStartedEvent.ROUTING_KEY);
   }
 }
 
@@ -171,8 +197,10 @@ export interface SubscriptionSucceededEventPayload {
 }
 
 export class SubscriptionSucceededEvent extends EventMessage<SubscriptionSucceededEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionSucceeded;
+
   constructor(payload: SubscriptionSucceededEventPayload) {
-    super(payload, ROUTING_KEYS.SubscriptionSucceeded);
+    super(payload, SubscriptionSucceededEvent.ROUTING_KEY);
   }
 }
 
@@ -185,8 +213,10 @@ export interface SubscriptionFailedEventPayload {
 }
 
 export class SubscriptionFailedEvent extends EventMessage<SubscriptionFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionFailed;
+
   constructor(payload: SubscriptionFailedEventPayload) {
-    super(payload, ROUTING_KEYS.SubscriptionFailed);
+    super(payload, SubscriptionFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -198,8 +228,10 @@ export interface PhysicalStartedEventPayload {
 }
 
 export class PhysicalStartedEvent extends EventMessage<PhysicalStartedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalStarted;
+
   constructor(payload: PhysicalStartedEventPayload) {
-    super(payload, ROUTING_KEYS.PhysicalStarted);
+    super(payload, PhysicalStartedEvent.ROUTING_KEY);
   }
 }
 
@@ -212,8 +244,10 @@ export interface PhysicalShipmentCreatedEventPayload {
 }
 
 export class PhysicalShipmentCreatedEvent extends EventMessage<PhysicalShipmentCreatedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalShipmentCreated;
+
   constructor(payload: PhysicalShipmentCreatedEventPayload) {
-    super(payload, ROUTING_KEYS.PhysicalShipmentCreated);
+    super(payload, PhysicalShipmentCreatedEvent.ROUTING_KEY);
   }
 }
 
@@ -226,8 +260,10 @@ export interface PhysicalSucceededEventPayload {
 }
 
 export class PhysicalSucceededEvent extends EventMessage<PhysicalSucceededEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalSucceeded;
+
   constructor(payload: PhysicalSucceededEventPayload) {
-    super(payload, ROUTING_KEYS.PhysicalSucceeded);
+    super(payload, PhysicalSucceededEvent.ROUTING_KEY);
   }
 }
 
@@ -240,8 +276,10 @@ export interface PhysicalFailedEventPayload {
 }
 
 export class PhysicalFailedEvent extends EventMessage<PhysicalFailedEventPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalFailed;
+
   constructor(payload: PhysicalFailedEventPayload) {
-    super(payload, ROUTING_KEYS.PhysicalFailed);
+    super(payload, PhysicalFailedEvent.ROUTING_KEY);
   }
 }
 
@@ -254,8 +292,10 @@ export interface ChargePaymentCommandPayload {
 }
 
 export class ChargePaymentCommand extends EventMessage<ChargePaymentCommandPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.ChargePayment;
+
   constructor(payload: ChargePaymentCommandPayload) {
-    super(payload, ROUTING_KEYS.ChargePayment);
+    super(payload, ChargePaymentCommand.ROUTING_KEY);
   }
 }
 
@@ -269,8 +309,10 @@ export interface GrantDigitalCommandPayload {
 }
 
 export class GrantDigitalCommand extends EventMessage<GrantDigitalCommandPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.GrantDigital;
+
   constructor(payload: GrantDigitalCommandPayload) {
-    super(payload, ROUTING_KEYS.GrantDigital);
+    super(payload, GrantDigitalCommand.ROUTING_KEY);
   }
 }
 
@@ -284,8 +326,10 @@ export interface ActivateSubscriptionCommandPayload {
 }
 
 export class ActivateSubscriptionCommand extends EventMessage<ActivateSubscriptionCommandPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.ActivateSubscription;
+
   constructor(payload: ActivateSubscriptionCommandPayload) {
-    super(payload, ROUTING_KEYS.ActivateSubscription);
+    super(payload, ActivateSubscriptionCommand.ROUTING_KEY);
   }
 }
 
@@ -299,7 +343,9 @@ export interface FulfillPhysicalCommandPayload {
 }
 
 export class FulfillPhysicalCommand extends EventMessage<FulfillPhysicalCommandPayload> {
+  static ROUTING_KEY: string = ROUTING_KEYS.FulfillPhysical;
+
   constructor(payload: FulfillPhysicalCommandPayload) {
-    super(payload, ROUTING_KEYS.FulfillPhysical);
+    super(payload, FulfillPhysicalCommand.ROUTING_KEY);
   }
 }

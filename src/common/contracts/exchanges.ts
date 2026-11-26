@@ -1,2 +1,5 @@
-export const EXCHANGE_MAIN = 'x.main';
-export const EXCHANGE_DLX = 'x.dlx';
+export const enum EXCHANGES {
+  MAIN = 'x.main',
+  DLX = 'x.dlx',
+  RETRY = 'x.retry',
+}
