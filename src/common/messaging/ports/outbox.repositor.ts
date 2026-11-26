@@ -1,5 +1,6 @@
 export interface OutboxRecord {
   id: string;
+  exchangeName: string;
   routingKey: string;
   occurredAt: Date;
   payload: unknown;

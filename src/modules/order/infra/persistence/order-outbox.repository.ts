@@ -15,6 +15,7 @@ export class OrderOutboxRepositoryPrisma implements OrderOutboxRepository {
       data: {
         id: event.eventId,
         orderId: event.payload.orderId,
+        exchangeName: event.exchangeName,
         routingKey: event.routingKey,
         payload: { ...event.payload },
         createdAt: event.occurredAt,

@@ -27,7 +27,7 @@ export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
         next_attempt_at = NOW() + INTERVAL '30 seconds'
       FROM claimed
       WHERE o.id = claimed.id
-      RETURNING o.id, o.routing_key as "routingKey", o.created_at AS "occurredAt", o.payload;`;
+      RETURNING o.id, o.exchange_name as "exchangeName", o.routing_key as "routingKey", o.created_at AS "occurredAt", o.payload;`;
     return result;
   }
 

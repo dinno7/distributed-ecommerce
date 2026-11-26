@@ -64,6 +64,7 @@ enum OutboxStatus {
 model OrderOutbox {
   id            String       @id @db.Uuid
   orderId       String       @map("order_id") @db.Uuid
+  exchangeName    String       @map("exchange_name")
   routingKey    String       @map("routing_key")
   payload       Json         @db.JsonB
   status        OutboxStatus @default(PENDING)

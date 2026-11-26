@@ -1,6 +1,6 @@
 import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { MessagePublisher } from '../ports/message-publisher.port';
-import { EventMessage } from '../../types/event-message';
+import { EventMessage } from '../../';
 import { OutboxRelayRepository } from '../ports/outbox.repositor';
 
 export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {
@@ -31,10 +31,11 @@ export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {
       const batch = await this.repo.claimBatch(this.batchSize);
       for (const record of batch) {
         try {
-          const msg = new EventMessage(record.payload, record.routingKey);
-          msg.eventId = record.id;
-          msg.routingKey = record.routingKey;
-          msg.occurredAt = record.occurredAt;
+          const msg = new EventMessage(record.payload, record.routingKey, {
+            eventId: record.id,
+            occurredAt: record.occurredAt,
+            exchangeName: record.exchangeName,
+          });
           await this.publisher.publish(msg);
           await this.repo.markPublished(record.id);
         } catch (err) {
