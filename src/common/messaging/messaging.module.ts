@@ -4,9 +4,11 @@ import { RabbitMQTopicPublisher } from './infra/rabbitmq.publisher';
 import {
   MessageHandlerErrorBehavior,
   RabbitMQModule,
+  RabbitMQQueueConfig,
 } from '@golevelup/nestjs-rabbitmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { EXCHANGE_DLX, EXCHANGE_MAIN } from '../contracts/exchanges';
+import { EXCHANGES } from '../contracts/exchanges';
+import { DealLetterQueues, RetryQueues } from '../contracts/queues';
 
 @Global()
 @Module({
@@ -18,22 +20,54 @@ import { EXCHANGE_DLX, EXCHANGE_MAIN } from '../contracts/exchanges';
         uri: config.getOrThrow<string>('app.rabbitmqUrl'),
         exchanges: [
           {
-            name: EXCHANGE_MAIN,
+            name: EXCHANGES.MAIN,
             type: 'topic',
             createExchangeIfNotExists: true,
             options: {
               durable: true,
             },
           },
-
           {
-            name: EXCHANGE_DLX,
-            type: 'topic',
+            name: EXCHANGES.RETRY,
+            type: 'direct',
             createExchangeIfNotExists: true,
             options: {
               durable: true,
             },
           },
+          {
+            name: EXCHANGES.DLX,
+            type: 'direct',
+            createExchangeIfNotExists: true,
+            options: {
+              durable: true,
+            },
+          },
+        ],
+        queues: [
+          ...RetryQueues.flatMap(
+            ({ queueName, ttlSeconds }): RabbitMQQueueConfig[] =>
+              ttlSeconds.map((ttl, index) => ({
+                name: `${queueName}.retry.${ttl}s`,
+                exchange: EXCHANGES.RETRY,
+                routingKey: `${queueName}.retry.${index + 1}`,
+                createQueueIfNotExists: true,
+                options: {
+                  durable: true,
+                  messageTtl: ttl * 1_000,
+                  deadLetterExchange: '',
+                  deadLetterRoutingKey: queueName,
+                },
+              })),
+          ),
+          // Final Dead Letter Queue for exhausted or non-retryable messages
+          ...DealLetterQueues.map((q): RabbitMQQueueConfig => ({
+            name: `${q}.dlq`,
+            exchange: EXCHANGES.DLX,
+            routingKey: `${q}.dlq`,
+            createQueueIfNotExists: true,
+            options: { durable: true },
+          })),
         ],
         prefetchCount: 10,
         enableControllerDiscovery: false,
