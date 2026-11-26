@@ -2,7 +2,6 @@ import { applyDecorators, Logger } from '@nestjs/common';
 import { Channel, ConsumeMessage } from 'amqplib';
 import { EXCHANGES } from '../../contracts/exchanges';
 import { MESSAGING_HEADERS } from '../../contracts/headers';
-import { RetryQueues } from '../../contracts/queues';
 import {
   RabbitHandlerConfig,
   RabbitSubscribe,
@@ -11,6 +10,7 @@ import {
 export class NonRetryableError extends Error {}
 
 interface RetryHandlerOptions {
+  maxRetries?: number;
   isPermanentError?: (error: unknown) => boolean;
 }
 
@@ -19,13 +19,8 @@ export function createRetryErrorHandler(
   options: RetryHandlerOptions = {},
 ) {
   const logger = new Logger(`MessageRetryErrorHandler:${queueName}`);
-  const queueConfig = RetryQueues.find((q) => q.queueName === queueName);
 
-  if (!queueConfig) {
-    throw new Error(`Queue "${queueName}" is not registered in RetryQueues`);
-  }
-
-  const maxRetries = queueConfig.ttlSeconds.length;
+  const maxRetries = options.maxRetries ?? 3;
   const isPermanentError =
     options.isPermanentError ?? ((err) => err instanceof NonRetryableError);
 
