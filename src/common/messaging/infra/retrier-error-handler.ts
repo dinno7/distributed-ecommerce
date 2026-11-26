@@ -1,8 +1,12 @@
-import { Logger } from '@nestjs/common';
+import { applyDecorators, Logger } from '@nestjs/common';
 import { Channel, ConsumeMessage } from 'amqplib';
 import { EXCHANGES } from '../../contracts/exchanges';
 import { MESSAGING_HEADERS } from '../../contracts/headers';
 import { RetryQueues } from '../../contracts/queues';
+import {
+  RabbitHandlerConfig,
+  RabbitSubscribe,
+} from '@golevelup/nestjs-rabbitmq';
 
 export class NonRetryableError extends Error {}
 
@@ -89,4 +93,60 @@ export function createRetryErrorHandler(
       channel.nack(msg, false, false);
     }
   };
+}
+
+export function quorumRetryErrorHandler(
+  channel: Channel,
+  msg: ConsumeMessage,
+  error: unknown,
+): void {
+  // Permanent domain/validation failures -> skip retries, go straight to DLQ
+  if (error instanceof NonRetryableError) {
+    channel.reject(msg, false);
+    return;
+  }
+
+  // Transient failures -> requeue via basic.reject so RabbitMQ 4.4:
+  // 1. Increments delivery-count
+  // 2. Holds message for min(x-delayed-retry-min * delivery-count, x-delayed-retry-max)
+  // 3. Dead-letters to app.dlx once delivery-count exceeds x-delivery-limit
+  channel.reject(msg, true);
+}
+
+export function RabbitRetrieableSubscriber(
+  options: Omit<RabbitHandlerConfig, 'type'> & {
+    queue: string; // Make it require
+    maxRetriesCount?: number;
+    delayMs?: number;
+  },
+) {
+  options.maxRetriesCount ??= 3;
+  options.delayMs ??= 5_000;
+  const additionalOptions = {
+    errorHandler: quorumRetryErrorHandler,
+    queueOptions: {
+      ...(options?.queueOptions ? options.queueOptions : {}),
+      arguments: {
+        ...(options?.queueOptions?.arguments
+          ? options.queueOptions.arguments
+          : {}),
+        'x-queue-type': 'quorum',
+        'x-delayed-retry-type': 'all',
+        'x-dead-letter-strategy': 'at-least-once',
+        'x-delayed-retry-min': options.delayMs, // 5s -> 10s -> 15s (linear backoff)
+        'x-delayed-retry-max': options.delayMs * 12, // Cap at this
+        'x-delivery-limit': options.maxRetriesCount, // Route to DLX after this
+        'x-dead-letter-exchange': EXCHANGES.DLX,
+        'x-dead-letter-routing-key': `${options.queue}.dlq`,
+      },
+    },
+  };
+
+  const finalOpts: RabbitHandlerConfig = {
+    ...options,
+    ...additionalOptions,
+    type: 'subscribe',
+  };
+
+  return applyDecorators(RabbitSubscribe(finalOpts));
 }
