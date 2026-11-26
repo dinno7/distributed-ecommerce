@@ -16,9 +16,23 @@ model Payment {
   amountMinor BigInt              @map("amount_minor")
   status      PaymentStatus
   failureCode PaymentFailureCode? @map("failure_code")
+  gatewayName String              @default("mock") @map("gateway_name")
+  checkoutUrl String?             @map("checkout_url")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, attempt])
   @@map("payment")
+}
+
+model PaymentOutbox {
+  id            String   @id @db.Uuid
+  exchangeName  String   @map("exchange_name")
+  routingKey    String   @map("routing_key")
+  payload       Json     @db.JsonB
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([nextAttemptAt, id])
+  @@map("payment_outbox")
 }
