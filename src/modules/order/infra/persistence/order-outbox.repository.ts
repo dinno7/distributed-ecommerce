@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { TransactionCtx } from '../../../../common/ports/transaction.port';
-import type { EventMessage } from '../../../../common/types/event-message';
+import type { EventMessage } from '../../../../common';
 import type { Prisma } from '../../../../generated/prisma/client.js';
 import type { OrderOutboxRepository } from '../../app/ports/order-outbox.repository';
 

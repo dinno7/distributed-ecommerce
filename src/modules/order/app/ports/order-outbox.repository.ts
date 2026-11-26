@@ -1,5 +1,5 @@
 import type { TransactionCtx } from '../../../../common/ports/transaction.port';
-import type { EventMessage } from '../../../../common/types/event-message';
+import type { EventMessage } from '../../../../common';
 
 export abstract class OrderOutboxRepository {
   abstract stage(

@@ -1,4 +1,4 @@
-import { EventMessage } from '../types/event-message';
+import { EventMessage } from '../';
 import { ROUTING_KEYS } from './routing-keys';
 
 export interface OrderCreatedEventPayload {

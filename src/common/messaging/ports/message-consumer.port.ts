@@ -1,4 +1,4 @@
-import { EventMessage } from '../../types/event-message';
+import { EventMessage } from '../../';
 
 export interface IncomingMessage {
   readonly messageId: string | undefined;
