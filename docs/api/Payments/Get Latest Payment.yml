@@ -1,0 +1,33 @@
+info:
+  name: Get Latest Payment
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiv1}}/payments?orderId={{created_order_id}}"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        if (!bru.getVar("created_order_id")) bru.runner.skipRequest();
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 200) {
+          const payment = res.getBody().data;
+          if (payment.paymentId && payment.status !== "PENDING") {
+            bru.setVar("payment_id", payment.paymentId);
+          } else {
+            bru.deleteVar("payment_id");
+          }
+          if (payment.status === "FAILED") {
+            bru.setVar("failed_payment_id", payment.paymentId);
+          }
+        }
+
+docs: |-
+  Run **Create Order** first. A `404` means no payment attempt exists yet. After creating an order, poll until a checkout URL is available.
+  Returns `200` with `paymentId`, `status`, `checkoutUrl`, `amountMinor` as a decimal string, and `currency` in `data`. The first pending checkout has a null `paymentId`, and `checkoutUrl` is present when checkout is ready. A failed payment includes `failureCode`.
+  Saves the payment ID for **Get Mock Checkout** and **Submit Mock Callback**. A missing or invalid `orderId` query parameter returns `400`.

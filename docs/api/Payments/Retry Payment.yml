@@ -1,0 +1,26 @@
+info:
+  name: Retry Payment
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiv1}}/payments/{{failed_payment_id}}/retry"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: if (!bru.getVar("failed_payment_id")) bru.runner.skipRequest();
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Submit a `DECLINE` or `TIMEOUT` in **Submit Mock Callback** to save the failed attempt ID. **Get Latest Payment** also saves the ID when the latest attempt is `FAILED`.
+  Returns `201` with the successor ID in `data.paymentId`. Repeating the same request returns the same ID. Use **Get Latest Payment** to load the successor checkout.
+  An invalid UUID returns `400`. An unknown attempt returns `404`. An attempt that has yet to fail returns `409 PAYMENT_RETRY_NOT_ELIGIBLE`.

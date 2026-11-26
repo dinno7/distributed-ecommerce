@@ -1,7 +1,7 @@
 info:
   name: Delete Product
   type: http
-  seq: 5
+  seq: 4
 
 http:
   method: DELETE
@@ -14,3 +14,7 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+docs: |-
+  Deletes the product saved by **Create Product** after the collection has used it for **Create Order**.
+  Returns `204` with an empty body, `400` for a malformed UUID, or `404` for an unknown product.

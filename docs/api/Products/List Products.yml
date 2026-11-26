@@ -1,7 +1,7 @@
 info:
   name: List Products
   type: http
-  seq: 2
+  seq: 1
 
 http:
   method: GET
@@ -14,3 +14,6 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+docs: |-
+  Returns `200` with a product array in `data`, sorted by ID. `limit` defaults to 25 (range 1–100), and `offset` defaults to 0 (range 0–2147483647).

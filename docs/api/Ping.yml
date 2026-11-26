@@ -14,3 +14,6 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+docs: |-
+  Returns `200` with `data: "pong"` when the HTTP API is reachable.

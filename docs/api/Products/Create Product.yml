@@ -1,7 +1,7 @@
 info:
   name: Create Product
   type: http
-  seq: 3
+  seq: 2
 
 http:
   method: POST
@@ -31,3 +31,8 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+docs: |-
+  Send `unitPriceMinor` as a string containing a nonnegative 64-bit integer in IRR minor units. `type` is `PHYSICAL`, `DIGITAL`, or `SUBSCRIPTION`.
+  `initialStock` is optional for physical products and defaults to zero. `digitalMetadata` is optional for digital products. `subscriptionDays` is required for subscriptions and must be positive.
+  A `201` returns the product in `data` and saves `data.id` as `created_product_id`.

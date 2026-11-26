@@ -1,7 +1,7 @@
 info:
   name: Get Product
   type: http
-  seq: 4
+  seq: 3
 
 http:
   method: GET
@@ -14,3 +14,7 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+docs: |-
+  Uses the ID saved by **Create Product**. A `200` returns the product in `data`, including `availableStock` when it has inventory.
+  A malformed UUID returns `400`. An unknown product returns `404`.
