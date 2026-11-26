@@ -17,7 +17,7 @@ export const PaymentFailureCode = {
 export type PaymentFailureCode =
   (typeof PaymentFailureCode)[keyof typeof PaymentFailureCode];
 
-type PaymentOutcome =
+export type PaymentOutcome =
   | { status: typeof PaymentStatus.SUCCEEDED; failureCode: null }
   | { status: typeof PaymentStatus.FAILED; failureCode: PaymentFailureCode };
 
