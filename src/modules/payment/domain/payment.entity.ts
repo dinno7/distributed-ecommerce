@@ -39,6 +39,7 @@ export class PaymentRetryNotEligibleError extends Error {
 
 export class Payment {
   #state: PaymentState;
+  readonly #preparedCheckoutUrl: string | null;
 
   constructor(
     readonly id: string,
@@ -46,12 +47,15 @@ export class Payment {
     readonly attempt: number,
     readonly amount: Money,
     state: PaymentState,
+    readonly gatewayName = 'mock',
+    checkoutUrl: string | null = null,
   ) {
     if (!Number.isInteger(attempt) || attempt < 1 || attempt > 2_147_483_647) {
       throw new RangeError('Payment attempt must be a positive 32-bit integer');
     }
 
     this.#state = { ...state };
+    this.#preparedCheckoutUrl = checkoutUrl;
   }
 
   get status(): PaymentStatus {
@@ -62,11 +66,21 @@ export class Payment {
     return this.#state.failureCode;
   }
 
-  static create(orderId: string, amount: Money): Payment {
-    return new Payment(randomUUIDv7(), orderId, 1, amount, {
-      status: PaymentStatus.AWAITING_CUSTOMER,
-      failureCode: null,
-    });
+  get checkoutUrl(): string | null {
+    return this.status === PaymentStatus.AWAITING_CUSTOMER
+      ? this.#preparedCheckoutUrl
+      : null;
+  }
+
+  static create(orderId: string, amount: Money, gatewayName = 'mock'): Payment {
+    return new Payment(
+      randomUUIDv7(),
+      orderId,
+      1,
+      amount,
+      { status: PaymentStatus.AWAITING_CUSTOMER, failureCode: null },
+      gatewayName,
+    );
   }
 
   settle(outcome: PaymentOutcome): boolean {
@@ -99,6 +113,7 @@ export class Payment {
         status: PaymentStatus.AWAITING_CUSTOMER,
         failureCode: null,
       },
+      this.gatewayName,
     );
   }
 }
