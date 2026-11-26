@@ -26,6 +26,7 @@ model Order {
 
   items       OrderItem[]
   outbox      OrderOutbox[]
+  payments    Payment[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])

@@ -1,0 +1,24 @@
+enum PaymentStatus {
+  AWAITING_CUSTOMER
+  SUCCEEDED
+  FAILED
+}
+
+enum PaymentFailureCode {
+  PAYMENT_DECLINED
+  PAYMENT_TIMED_OUT
+}
+
+model Payment {
+  id          String              @id @db.Uuid
+  orderId     String              @map("order_id") @db.Uuid
+  attempt     Int
+  amountMinor BigInt              @map("amount_minor")
+  status      PaymentStatus
+  failureCode PaymentFailureCode? @map("failure_code")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, attempt])
+  @@map("payment")
+}
