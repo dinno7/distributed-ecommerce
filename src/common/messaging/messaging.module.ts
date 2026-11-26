@@ -16,7 +16,32 @@ import { EXCHANGES } from '../contracts/exchanges';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         uri: config.getOrThrow<string>('app.rabbitmqUrl'),
+        exchangeBindings: [
+          {
+            source: EXCHANGES.MAIN,
+            destination: EXCHANGES.AUDIT,
+            pattern: '#',
+          },
+          {
+            source: EXCHANGES.RETRY,
+            destination: EXCHANGES.AUDIT,
+            pattern: '#',
+          },
+          {
+            source: EXCHANGES.DLX,
+            destination: EXCHANGES.AUDIT,
+            pattern: '#',
+          },
+        ],
         exchanges: [
+          {
+            name: EXCHANGES.AUDIT,
+            type: 'fanout',
+            createExchangeIfNotExists: true,
+            options: {
+              durable: true,
+            },
+          },
           {
             name: EXCHANGES.MAIN,
             type: 'topic',
