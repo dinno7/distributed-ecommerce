@@ -16,6 +16,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { Request, Response } from 'express';
 import { MessagingModule } from './common/messaging/messaging.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MessagingModule } from './common/messaging/messaging.module';
     PersistenceModule,
     ProductModule,
     OrderModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [PrismaIdempotencyStore],
