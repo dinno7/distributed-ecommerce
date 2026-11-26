@@ -21,4 +21,10 @@ export abstract class PaymentRepository {
   ): Promise<Payment | null>;
 
   abstract update(payment: Payment, tx: TransactionCtx): Promise<void>;
+
+  abstract setCheckoutUrl(
+    id: string,
+    checkoutUrl: string,
+    tx: TransactionCtx,
+  ): Promise<Payment>;
 }
