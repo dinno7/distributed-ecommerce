@@ -2,6 +2,8 @@ import type { ProductType } from '../../../common/types/product-type';
 
 export const OrderItemStatus = {
   PENDING: 'PENDING',
+  SKIPPED: 'SKIPPED',
+  SUCCEEDED: 'SUCCEEDED',
   QUEUED: 'QUEUED',
   PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',
@@ -14,6 +16,7 @@ export type OrderItemStatus =
 export interface OrderItemSnapshot {
   readonly productId: string;
   readonly productType: ProductType;
+  readonly subscriptionDays?: number | null;
   readonly quantity: number;
   readonly unitPriceMinor: bigint;
 }

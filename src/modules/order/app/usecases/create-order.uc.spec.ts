@@ -1,7 +1,13 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
-import { TransactionManager } from '../../../../common/ports/transaction.port';
+import { LatestPaymentQuery } from '../../../../common/ports/latest-payment-query.port';
+import { ProductCatalog } from '../../../../common/ports/product-catalog.port';
+import { ShipmentQuery } from '../../../../common/ports/shipment-query.port';
+import {
+  TransactionManager,
+  type TransactionCtx,
+} from '../../../../common/ports/transaction.port';
 import { ProductType } from '../../../../common/types/product-type';
 import { OrderModule } from '../../order.module';
 import { OrderOutboxRelay } from '../outbox.relay';
@@ -9,17 +15,19 @@ import { OrderProductCatalog } from '../ports/order-product-catalog.port';
 import { CreateOrderUC } from './create-order.uc';
 
 describe('CreateOrderUC catalog checks', () => {
-  const findMany = jest.fn();
+  const findProducts = jest.fn();
   const tx = {
-    product: { findMany },
     order: { create: jest.fn() },
     orderOutbox: { create: jest.fn() },
   };
+  const transaction = jest.fn(
+    (run: (transaction: typeof tx) => Promise<unknown>) => run(tx),
+  );
   const mug = {
     id: '019338a0-0000-7000-8000-00000000000a',
     type: ProductType.PHYSICAL,
     unitPriceMinor: 250n,
-    inventory: { available: 3 },
+    availableStock: 3,
     subscriptionDays: null,
     digitalMetadata: null,
   };
@@ -27,7 +35,7 @@ describe('CreateOrderUC catalog checks', () => {
     id: '019338a0-0000-7000-8000-00000000000b',
     type: ProductType.DIGITAL,
     unitPriceMinor: 100n,
-    inventory: null,
+    availableStock: null,
     subscriptionDays: null,
     digitalMetadata: { format: 'epub' },
   };
@@ -40,20 +48,27 @@ describe('CreateOrderUC catalog checks', () => {
     })
       .overrideProvider(PrismaService)
       .useValue({
-        $transaction: (run: (transaction: typeof tx) => Promise<unknown>) =>
-          run(tx),
+        $transaction: transaction,
       })
       .overrideProvider(OrderOutboxRelay)
       .useValue({})
+      .useMocker((token) => {
+        if (token === ProductCatalog) return { findByIdsTx: findProducts };
+        if (token === LatestPaymentQuery) return { execute: jest.fn() };
+        if (token === ShipmentQuery) return { listShipments: jest.fn() };
+      })
       .compile();
     useCase = module.get(CreateOrderUC);
   });
 
-  beforeEach(() => findMany.mockReset());
+  beforeEach(() => {
+    findProducts.mockReset();
+    transaction.mockClear();
+  });
   afterAll(async () => module?.close());
 
   it('uses one catalog lookup to price all items and check physical stock', async () => {
-    findMany.mockResolvedValueOnce([book, mug]);
+    findProducts.mockResolvedValueOnce([book, mug]);
 
     const order = await useCase.execute({
       customerId: 'customer',
@@ -63,10 +78,8 @@ describe('CreateOrderUC catalog checks', () => {
       ],
     });
 
-    expect(findMany).toHaveBeenCalledTimes(1);
-    expect(findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: { in: [mug.id, book.id] } } }),
-    );
+    expect(findProducts).toHaveBeenCalledTimes(1);
+    expect(findProducts).toHaveBeenCalledWith([mug.id, book.id], tx);
     expect(order.totalMinor).toBe(850n);
     expect(order.items).toMatchObject([
       {
@@ -85,7 +98,7 @@ describe('CreateOrderUC catalog checks', () => {
   });
 
   it('exposes catalog details through the Orders port', async () => {
-    findMany.mockResolvedValueOnce([book, mug]);
+    findProducts.mockResolvedValueOnce([book, mug]);
 
     const catalog = module.get(OrderProductCatalog);
     const products = await module
@@ -102,8 +115,29 @@ describe('CreateOrderUC catalog checks', () => {
     ]);
   });
 
+  it('writes the order and outbox using the supplied transaction', async () => {
+    findProducts.mockResolvedValueOnce([book]);
+    const createOrder = jest.fn();
+    const stageEvent = jest.fn();
+    const callerTx = {
+      order: { create: createOrder },
+      orderOutbox: { create: stageEvent },
+    };
+
+    await useCase.execute({
+      customerId: 'customer',
+      items: [{ productId: book.id, quantity: 1 }],
+      tx: callerTx as TransactionCtx,
+    });
+
+    expect(transaction).not.toHaveBeenCalled();
+    expect(findProducts).toHaveBeenCalledWith([book.id], callerTx);
+    expect(createOrder).toHaveBeenCalledTimes(1);
+    expect(stageEvent).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a bad request error for a product missing from the catalog', async () => {
-    findMany.mockResolvedValueOnce([]);
+    findProducts.mockResolvedValueOnce([]);
 
     await expect(
       useCase.execute({
@@ -117,7 +151,7 @@ describe('CreateOrderUC catalog checks', () => {
   });
 
   it('rejects a physical quantity above available stock', async () => {
-    findMany.mockResolvedValueOnce([mug]);
+    findProducts.mockResolvedValueOnce([mug]);
 
     await expect(
       useCase.execute({
@@ -137,6 +171,6 @@ describe('CreateOrderUC catalog checks', () => {
         ],
       }),
     ).rejects.toThrow('An order requires distinct products');
-    expect(findMany).not.toHaveBeenCalled();
+    expect(findProducts).not.toHaveBeenCalled();
   });
 });

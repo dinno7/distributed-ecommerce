@@ -5,6 +5,9 @@ import { OrderItemStatus } from './order-item.entity';
 
 export const OrderStatus = {
   PENDING_PAYMENT: 'PENDING_PAYMENT',
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  FULFILLING: 'FULFILLING',
+  FULFILLMENT_FAILED: 'FULFILLMENT_FAILED',
   PAID: 'PAID',
   PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',
@@ -27,6 +30,7 @@ export class Order {
     readonly createdAt: Date,
     updatedAt: Date,
     items: readonly OrderItem[] = [],
+    readonly paymentAttemptNo = 0,
   ) {
     this.#items = Object.freeze([...items]);
     this.#totalMinor = totalMinor;
@@ -76,6 +80,7 @@ export class Order {
     productType,
     quantity,
     unitPriceMinor,
+    subscriptionDays,
   }: OrderItemSnapshot): void {
     if (this.status !== OrderStatus.PENDING_PAYMENT) {
       throw new Error('Items can only be added to orders pending payment');
@@ -100,6 +105,7 @@ export class Order {
       productType,
       quantity,
       unitPriceMinor,
+      ...(subscriptionDays != null ? { subscriptionDays } : {}),
       status: OrderItemStatus.PENDING,
       attempts: 0,
       claimedBy: null,
