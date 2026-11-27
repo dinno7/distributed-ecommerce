@@ -1,13 +1,14 @@
 import {
   type INestApplication,
-  RequestMethod,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
 import { PrismaExceptionFilter } from './common/infra/exception-filters/prisma-exception.filter';
 import { ResponseInterceptor } from './common/infra/interceptors/response.interceptor';
+import { Logger } from 'pino-nestjs';
 
 export function configureHttp(app: INestApplication): void {
+  app.useLogger(app.get(Logger));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

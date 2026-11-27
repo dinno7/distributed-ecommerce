@@ -20,6 +20,7 @@ import {
   orderFulfillmentQueue,
   orderPaymentQueue,
 } from './modules/order/presentations/rabbitmq/order-workflow.routes';
+import { LoggerModule } from 'pino-nestjs';
 
 const workflowQueues = [
   // Preserve the existing payment queue declaration on upgrade.
@@ -55,6 +56,7 @@ const workflowQueues = [
         fallthrough: false,
       },
     }),
+    LoggerModule.forRoot(),
     MessagingModule.forRoot(workflowQueues),
     PersistenceModule,
     TerminusModule,
