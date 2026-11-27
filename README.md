@@ -8,14 +8,34 @@ The demo assumes trusted callers and simulates payment and fulfillment locally.
 
 ## Run with Docker Compose
 
-With Docker and Compose installed, run the following from the repository root. Compose builds the app from your checkout, tags it `ghcr.io/dinno7/distribute-ecommerce:latest`, and starts it alongside PostgreSQL and RabbitMQ.
+1. Install Git and start Docker Desktop, or use Docker Engine with the Compose plugin on Linux. Run `docker info` and `docker compose version` to check both are available. The first run needs internet access to download the container images. [Docker Compose installation guide](https://docs.docker.com/compose/install/)
 
-```bash
-docker compose up -d
-docker compose logs -f app
-```
+2. Clone the repository and enter it.
 
-The app container applies Prisma migrations and seeds the demo catalog before starting the API. It serves the [project docs](http://localhost:7000/docs/) and the [API reference](http://localhost:7000/apidocs/).
+   ```bash
+   git clone https://github.com/dinno7/distributed-ecommerce.git
+   cd distributed-ecommerce
+   ```
+
+3. Start the stack. Compose is configured to pull `ghcr.io/dinno7/distribute-ecommerce:latest` from GitHub Container Registry. Compose provides the demo configuration on a fresh checkout, so you can start without creating a `.env` file. Make sure local ports `7000`, `5432`, `5672`, and `15672` are free.
+
+   ```bash
+   docker compose up -d
+   ```
+
+   To build the image from your checkout, uncomment `pull_policy: build` and the entire `build:` block under `services.app` in `compose.yml`, then run `docker compose up -d --build`. Use this option if the registry returns `manifest unknown`.
+
+   The app container applies Prisma migrations and seeds the demo catalog before starting the API.
+
+4. Open the health endpoint. When `data.status` is `ok`, the app can reach PostgreSQL and RabbitMQ. If the endpoint is still unavailable, check `docker compose ps` and `docker compose logs --tail=100 app postgres rabbitmq` for startup errors. [Health endpoint](http://localhost:7000/api/health)
+
+5. Open the app in your browser.
+
+   - Watch audit events as they happen at [`/`](http://localhost:7000/). Follow the [mixed order walkthrough](#try-a-mixed-order) to generate events.
+   - Read the project documentation at [`/docs/`](http://localhost:7000/docs/).
+   - Browse API endpoints and request examples at [`/apidocs/`](http://localhost:7000/apidocs/).
+
+6. When finished, run `docker compose down` from the same directory. This removes the containers and keeps the database and broker data for the next run.
 
 ## Run from source
 
@@ -98,4 +118,4 @@ pnpm test:e2e --runInBand fulfillment.e2e-spec.ts
 - **Dead-lettered work.** After fixing the cause, republish the delivery to RabbitMQ's `x.main` exchange with its original routing key, body, and message ID. Acknowledge the dead-letter copy after RabbitMQ confirms the republish. Orders and Fulfillment use persisted workflow state to deduplicate the delivery.
 - **Upgrading to the fulfillment workflow.** Stop older app instances before applying the migrations. The migration restages eligible payment events for existing orders still pending payment. Start the new app to declare the queue bindings and resume delivery.
 
-See the [project documentation](docs/INDEX.md) and the [fulfillment specification](docs/post-payment-spec.md) for design details and diagrams.
+See the [project documentation](docs/INDEX.md) and the [fulfillment sequence diagram](docs/diagrams/fulfill_order.md) for design details and diagrams.
