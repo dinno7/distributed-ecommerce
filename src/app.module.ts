@@ -10,8 +10,31 @@ import { PrismaIdempotencyStore } from './common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MessagingModule } from './common/messaging/messaging.module';
+import { QUEUES } from './common/contracts/queues';
+import { ROUTING_KEYS } from './common/contracts/routing-keys';
+import {
+  orderFulfillmentQueue,
+  orderPaymentQueue,
+} from './modules/order/presentations/rabbitmq/order-workflow.routes';
+
 import { PaymentModule } from './modules/payment/payment.module';
 import { AuditModule } from './modules/audit/audit.module';
+const workflowQueues = [
+  // Preserve the existing payment queue declaration on upgrade.
+  {
+    name: QUEUES.PaymentProcess,
+    routingKey: ROUTING_KEYS.OrderCreated,
+    rejectOnOverflow: false,
+  },
+  orderPaymentQueue,
+  { name: QUEUES.FulfillDigital, routingKey: ROUTING_KEYS.GrantDigital },
+  {
+    name: QUEUES.FulfillSubscription,
+    routingKey: ROUTING_KEYS.ActivateSubscription,
+  },
+  { name: QUEUES.FulfillPhysical, routingKey: ROUTING_KEYS.FulfillPhysical },
+  orderFulfillmentQueue,
+];
 
 @Module({
   imports: [
@@ -30,7 +53,7 @@ import { AuditModule } from './modules/audit/audit.module';
         fallthrough: false,
       },
     }),
-    MessagingModule,
+    MessagingModule.forRoot(workflowQueues),
     PersistenceModule,
     ProductModule,
     OrderModule,
