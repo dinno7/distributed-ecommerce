@@ -23,7 +23,7 @@ class CreateOrderItemDto {
   quantity: number;
 }
 
-export class CreateOrderDto implements CreateOrderInput {
+export class CreateOrderDto implements Omit<CreateOrderInput, 'tx'> {
   @IsUUID()
   customerId: string;
 
