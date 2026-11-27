@@ -12,6 +12,9 @@ default:
 dev:
     pnpm start:dev
 
+# Build the app Docker image
+dockerbuild:
+    docker build -t ghcr.io/dinno7/distributed-ecommerce .
 
 # Serve document and watch changes
 @doc:
@@ -35,6 +38,12 @@ dbmig name="":
 # Run seeds
 dbseed:
  pnpm prisma db seed
+
+# Reset migrations
+dbreset:
+ pnpm prisma migrate reset
+ just dbseed
+
 # Generate documents & api docs
 @docsgen:
   #! /bin/sh
@@ -65,7 +74,7 @@ dbseed:
   fi
 
   cd "$api_docs_dir" && \
-    bru docs generate --envs 'dev' -o "$bruno_tmp" && \
+    bru docs generate --envs 'dev,staging' --git-link -o "$bruno_tmp" && \
     cat $bruno_tmp | sed 's/https:\/\/cdn.usebruno.com\/api-docs/\/apidocs/g' > "$bruno" && \
     rm "$bruno_tmp"
 
