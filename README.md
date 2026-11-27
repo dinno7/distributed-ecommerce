@@ -1,6 +1,6 @@
-# Snap Shop
+# distributed ecommerce system
 
-Snap Shop is an e-commerce backend that processes orders containing physical products, digital goods, and subscriptions. The NestJS app runs the HTTP API, mock checkout, and background workers. PostgreSQL stores orders and transactional outboxes, and RabbitMQ carries payment and fulfillment messages between modules.
+The distributed ecommerce system is an e-commerce backend that processes orders containing physical products, digital goods, and subscriptions. The NestJS app runs the HTTP API, mock checkout, and background workers. PostgreSQL stores orders and transactional outboxes, and RabbitMQ carries payment and fulfillment messages between modules.
 
 After a successful payment, the fulfillment workers reserve stock and create shipments for physical items, record access grants for digital items, and activate or extend subscriptions. If one item fails, completed items stay fulfilled. The audit API exposes stored events and a live stream.
 
