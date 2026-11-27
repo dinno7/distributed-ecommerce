@@ -1,18 +1,21 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
+const maxPageSize = 100;
+
 export class PaginationDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(1 + Math.floor(2_147_483_647 / maxPageSize))
   private page = 1;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(maxPageSize)
   private per_page = 10;
 
   get take(): number {
