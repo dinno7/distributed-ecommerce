@@ -13,7 +13,11 @@ export class OrderMapper {
       row.currency,
       row.createdAt,
       row.updatedAt,
-      row.items.map(({ orderId: _orderId, ...item }) => item),
+      row.items.map(({ orderId: _orderId, subscriptionDays, ...item }) => ({
+        ...item,
+        ...(subscriptionDays != null ? { subscriptionDays } : {}),
+      })),
+      row.paymentAttemptNo,
     );
   }
 

@@ -2,11 +2,10 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
 import { TransactionManager } from '../../../../common/ports/transaction.port';
-import { OrderOutboxRelay } from '../../app/outbox.relay';
 import { OrderRepository } from '../../app/ports/order.repository';
 import { OrderItemStatus } from '../../domain/order-item.entity';
 import { Order, OrderStatus } from '../../domain/order.entity';
-import { OrderModule } from '../../order.module';
+import { OrderRepositoryPrisma } from './order.repository';
 
 describe('OrderRepositoryPrisma', () => {
   const tx = { order: { create: jest.fn() } };
@@ -16,7 +15,8 @@ describe('OrderRepositoryPrisma', () => {
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
-      imports: [PersistenceModule, OrderModule],
+      imports: [PersistenceModule],
+      providers: [OrderRepositoryPrisma],
     })
       .overrideProvider(PrismaService)
       .useValue({
@@ -24,10 +24,8 @@ describe('OrderRepositoryPrisma', () => {
         $transaction: (run: (transaction: typeof tx) => Promise<unknown>) =>
           run(tx),
       })
-      .overrideProvider(OrderOutboxRelay)
-      .useValue({})
       .compile();
-    repository = module.get(OrderRepository);
+    repository = module.get(OrderRepositoryPrisma);
   });
 
   afterAll(async () => module?.close());

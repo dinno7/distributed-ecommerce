@@ -14,7 +14,7 @@ export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
       WITH claimed AS (
         SELECT * FROM orders_outbox
         WHERE
-          status = 'PENDING'
+          status IN ('PENDING', 'FAILED')
           AND
           next_attempt_at <= NOW()
           ORDER BY created_at ASC
@@ -42,10 +42,10 @@ export class OrderOutboxRelayRepositoryPrisma implements OutboxRelayRepository {
   }
 
   async markFailed(id: string, retryAfterMs: number): Promise<void> {
-    await this.db.orderOutbox.update({
-      where: { id },
+    await this.db.orderOutbox.updateMany({
+      where: { id, status: { not: 'PUBLISHED' } },
       data: {
-        status: 'FAILED',
+        status: 'PENDING',
         nextAttemptAt: new Date(Date.now() + retryAfterMs),
       },
     });
