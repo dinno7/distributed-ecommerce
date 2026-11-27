@@ -1,6 +1,6 @@
-# Snap Shop
+# distributed ecommerce system
 
-Snap Shop is an e-commerce backend that processes orders containing physical products, digital goods, and subscriptions. The NestJS app runs the HTTP API, mock checkout, and background workers. PostgreSQL stores orders and transactional outboxes, and RabbitMQ carries payment and fulfillment messages between modules.
+The distributed ecommerce system is an e-commerce backend that processes orders containing physical products, digital goods, and subscriptions. The NestJS app runs the HTTP API, mock checkout, and background workers. PostgreSQL stores orders and transactional outboxes, and RabbitMQ carries payment and fulfillment messages between modules.
 
 After a successful payment, the fulfillment workers reserve stock and create shipments for physical items, record access grants for digital items, and activate or extend subscriptions. If one item fails, completed items stay fulfilled. The audit API exposes stored events and a live stream.
 
@@ -8,7 +8,7 @@ The demo assumes trusted callers and simulates payment and fulfillment locally.
 
 ## Run with Docker Compose
 
-With Docker and Compose installed, start the app image, PostgreSQL, and RabbitMQ.
+With Docker and Compose installed, run the following from the repository root. Compose builds the app from your checkout, tags it `ghcr.io/dinno7/distribute-ecommerce:latest`, and starts it alongside PostgreSQL and RabbitMQ.
 
 ```bash
 docker compose up -d
@@ -16,14 +16,6 @@ docker compose logs -f app
 ```
 
 The app container applies Prisma migrations and seeds the demo catalog before starting the API. It serves the [project docs](http://localhost:7000/docs/) and the [API reference](http://localhost:7000/apidocs/).
-
-Compose uses `ghcr.io/dinno7/distributed-ecommerce:latest`. To run the code in your checkout, build that tag and start the app with image pulls disabled.
-
-```bash
-docker build -t ghcr.io/dinno7/distributed-ecommerce:latest .
-docker compose up -d --wait postgres rabbitmq
-docker compose up -d --pull never app
-```
 
 ## Run from source
 
