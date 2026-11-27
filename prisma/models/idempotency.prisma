@@ -1,0 +1,15 @@
+model IdempotencyKey {
+  /// SHA-256 of the record key: keys can be longer than an index entry allows.
+  keyHash     String  @id @map("key_hash")
+  key         String
+  fingerprint String
+  /// The attempt holding the lock; null once the record is completed.
+  owner       String?
+  /// null while in flight. json, not jsonb: jsonb rejects "\u0000" in strings.
+  response    Json?   @db.Json
+  /// Epoch milliseconds.
+  expiresAt   BigInt  @map("expires_at")
+
+  @@index([expiresAt], map: "idempotency_keys_expires_at_idx")
+  @@map("idempotency_keys")
+}

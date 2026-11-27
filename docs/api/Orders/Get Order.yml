@@ -1,0 +1,12 @@
+info:
+  name: Get Order
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: '{{apiv1}}/orders/{{created_order_id}}'
+  auth: inherit
+
+docs: |-
+  Returns the order summary, items, latest payment or null, and shipments in `data`. Monetary amounts are decimal strings. Items use `status`, `attempts`, and `failureCode` to describe their current state. The latest payment and shipments can be visible before Orders applies their events.

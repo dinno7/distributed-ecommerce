@@ -1,0 +1,11 @@
+name: dev
+variables:
+  - name: server_url
+    value: http://localhost:7000
+    description: HTTP origin used by the API requests.
+  - name: base_url
+    value: "{{server_url}}/api"
+    description: ""
+  - name: apiv1
+    value: "{{base_url}}/v1"
+    description: ""

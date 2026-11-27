@@ -1,0 +1,38 @@
+info:
+  name: Submit Mock Callback
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiv1}}/payments/{{payment_id}}/callback"
+  body:
+    type: json
+    data: |-
+      // { "result": "TIMEOUT" }
+      { "result": "DECLINE" }
+      // { "result": "SUCCESS" }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: if (!bru.getVar("payment_id")) bru.runner.skipRequest();
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 200 && res.getBody().data.status === "FAILED") {
+          bru.setVar("failed_payment_id", res.getBody().data.paymentId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Use the ID saved by **Get Latest Payment**. Set `result` to `SUCCESS`, `DECLINE`, or `TIMEOUT`. The example declines the payment so it can be retried.
+  Returns `200` with the settled payment in `data` and a null `checkoutUrl`. Failed results include `PAYMENT_DECLINED` or `PAYMENT_TIMED_OUT` as `failureCode` and save the ID for **Retry Payment**.
+  An identical repeat returns the stored outcome. A conflicting result returns `409 PAYMENT_ALREADY_FINAL`, and a checkout still being prepared also returns `409`.
+  An invalid UUID or result returns `400`, and an unknown payment or a payment from another gateway returns `404`.

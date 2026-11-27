@@ -1,0 +1,20 @@
+info:
+  name: Delete Product
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{apiv1}}/products/{{created_product_id}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  Deletes the product saved by **Create Product** and its inventory row. The order request uses the seeded catalog. If you substitute the new physical product into an order, wait for fulfillment before deleting it.
+  Returns `204` with an empty body, `400` for a malformed UUID, or `404` for an unknown product.

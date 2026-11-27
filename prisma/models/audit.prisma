@@ -1,0 +1,16 @@
+model AuditLog {
+  id            String    @id @default(uuid())
+  exchange      String
+  routingKey    String
+  messageId     String?   @unique
+  correlationId String?
+  payload       Json
+  headers       Json?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([exchange, routingKey])
+  @@index([correlationId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

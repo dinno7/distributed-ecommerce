@@ -1,0 +1,39 @@
+info:
+  name: Create Product
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: '{{apiv1}}/products'
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Bruno Test Product",
+        "type": "PHYSICAL",
+        "unitPriceMinor": "12900",
+        "initialStock": 3
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 201) {
+          bru.setCollectionVar("created_product_id", res.getBody().data.id);
+          bru.setVar("created_product_id", res.getBody().data.id);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  Send `unitPriceMinor` as a string containing a nonnegative 64-bit integer in IRR minor units. `type` is `PHYSICAL`, `DIGITAL`, or `SUBSCRIPTION`.
+  `initialStock` is optional for physical products and defaults to zero. `digitalMetadata` is optional for digital products. `subscriptionDays` is required for subscriptions and must be positive.
+  A `201` returns the product in `data` and saves `data.id` as `created_product_id`.

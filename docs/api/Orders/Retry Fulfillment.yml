@@ -1,0 +1,19 @@
+info:
+  name: Retry Fulfillment
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: '{{apiv1}}/orders/{{created_order_id}}/retry'
+  headers:
+    - name: Idempotency-Key
+      value: '{{$randomUUID}}'
+  body:
+    type: json
+    data: '{}'
+  auth: inherit
+
+docs: |-
+  For a `FULFILLMENT_FAILED` order, send `{}` to retry all eligible items or `{ "itemId": "<uuid>" }` for one. Only items failed with `OUT_OF_STOCK` can be retried.
+  Requires `Idempotency-Key`. A `202` returns `orderId`, `status: "FULFILLING"`, and `itemIds` in `data`. Reuse the same key and body to replay the result. An ineligible retry returns `409 RETRY_NOT_ELIGIBLE`.

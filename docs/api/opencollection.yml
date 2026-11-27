@@ -1,0 +1,26 @@
+opencollection: 1.0.0
+
+info:
+  name: Distributed E-Commerce(SnapShop)
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: created_order_id
+      value: 01a21ed7-5ee8-7bc1-8b82-fc48c18091ae
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

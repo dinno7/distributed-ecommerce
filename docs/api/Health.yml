@@ -1,0 +1,14 @@
+info:
+  name: Health
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{base_url}}/health"
+  auth: inherit
+
+docs: |-
+  Checks PostgreSQL with `SELECT 1` and a one-second timeout. Checks whether the app's RabbitMQ connection is active.
+  Returns `200` with `data.status: "ok"` and `data.details` showing `postgres` and `rabbitmq` as `up`.
+  Returns `503` if either dependency is down. The response has top-level `status: "error"` and `details` with the status of both dependencies.

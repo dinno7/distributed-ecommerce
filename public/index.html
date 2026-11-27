@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Audit stream · Distributed E-Commerce System</title>
+    <style>
+      :root {
+        --page: #0e1420;
+        --surface: #172133;
+        --recessed: #101827;
+        --raised: #24344e;
+        --ink: #eef4ff;
+        --muted: #a9bad2;
+        --line: #2e405a;
+        --accent: #a8caff;
+        --focus: #9ecaff;
+        --live-surface: #1c2e47;
+        --live-flash: #304f74;
+        --mono: ui-monospace, 'DejaVu Sans Mono', monospace;
+        color-scheme: dark;
+        font:
+          16px/1.5 'Trebuchet MS',
+          system-ui,
+          sans-serif;
+        color: var(--ink);
+        background: var(--page);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 4px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 48px));
+        margin-inline: auto;
+      }
+      .topbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar .shell {
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #203958;
+        color: var(--accent);
+        font: bold 19px/1 var(--mono);
+      }
+      .docs {
+        color: var(--muted);
+        font-size: 0.875rem;
+        text-underline-offset: 4px;
+      }
+      .docs:hover {
+        color: var(--ink);
+      }
+      .header-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px 16px;
+      }
+      main {
+        padding-block: 40px 64px;
+      }
+
+      .hero {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 28px;
+        min-height: 236px;
+        padding: clamp(24px, 5vw, 48px);
+        border: 1px solid #365779;
+        border-radius: 24px;
+        background: linear-gradient(110deg, #13243a, #193450);
+      }
+      .hero::before {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        background: radial-gradient(circle, #90bcf6 1px, transparent 1.4px) 0
+          0 / 16px 16px;
+        mask-image: linear-gradient(100deg, transparent 28%, #000 100%);
+        opacity: 0.25;
+        content: '';
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 11px;
+        border: 1px solid #4d688b;
+        border-radius: 100px;
+        background: #233e5d;
+        color: #f5dfaa;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .status::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        content: '';
+      }
+      .status[data-state='live'] {
+        color: #b3d4ff;
+      }
+      .status[data-state='live']::before {
+        box-shadow: 0 0 0 3px #b3d4ff29;
+      }
+      .status[data-state='offline'] {
+        color: #ffbab1;
+      }
+      h1 {
+        margin: 12px 0 5px;
+        font-size: clamp(2.6rem, 7vw, 4.5rem);
+        line-height: 1;
+        letter-spacing: -0.065em;
+      }
+      .hero p {
+        margin: 12px 0 0;
+        color: #c8d9ee;
+      }
+      .endpoint {
+        margin: 0;
+        padding: 12px 16px;
+        border: 1px solid #4d688b;
+        border-radius: 12px;
+        background: #233e5d;
+        font-size: 0.8rem;
+      }
+      .endpoint dt {
+        color: #c8d9ee;
+      }
+      .endpoint dd {
+        margin: 3px 0 0;
+        color: #deecff;
+      }
+
+      .feed {
+        margin-top: 24px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--surface);
+        box-shadow: 0 8px 24px #0003;
+      }
+      .feed-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+      h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        letter-spacing: -0.035em;
+      }
+      .count {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      #search {
+        width: min(240px, 100%);
+        min-height: 34px;
+        padding: 0 10px;
+        border: 1px solid #637894;
+        border-radius: 7px;
+        background: var(--recessed);
+        color: var(--ink);
+        font-size: 0.82rem;
+      }
+      #search::placeholder {
+        color: var(--muted);
+      }
+      .event-filter {
+        display: inline-flex;
+        align-self: center;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 8px;
+        background: var(--recessed);
+        color: var(--muted);
+      }
+      .event-filter input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        opacity: 0;
+      }
+      .event-filter span {
+        display: grid;
+        min-height: 30px;
+        align-items: center;
+        padding: 0 9px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .event-filter label:hover span {
+        color: var(--ink);
+      }
+      .event-filter input:checked + span {
+        background: var(--raised);
+        color: var(--accent);
+        box-shadow: inset 0 0 0 1px #618ebb;
+      }
+      .event-filter input:focus-visible + span {
+        outline: 3px solid var(--focus);
+        outline-offset: -2px;
+      }
+      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 34px;
+        padding: 0 10px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        background: var(--button-background, transparent);
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      button:hover:not(:disabled) {
+        background: var(--button-hover, var(--raised));
+      }
+      button:focus-visible {
+        outline-offset: 2px;
+      }
+      button:disabled {
+        opacity: 0.42;
+        cursor: default;
+      }
+
+      .history-error {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line);
+        background: #2d2317;
+        color: #f1c98c;
+        font-size: 0.875rem;
+      }
+      #retry-history {
+        --button-background: #49341c;
+        --button-hover: #5a4225;
+        color: inherit;
+      }
+      .empty {
+        padding: 62px 20px 68px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .empty strong {
+        display: block;
+        color: var(--ink);
+        font-size: 1.13rem;
+      }
+      .empty p {
+        margin: 4px 0 0;
+      }
+      .signal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 3px;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 15px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--live-surface);
+        color: var(--accent);
+      }
+      .signal i {
+        width: 3px;
+        height: 9px;
+        border-radius: 3px;
+        background: currentColor;
+      }
+      .signal i:nth-child(2),
+      .signal i:nth-child(4) {
+        height: 15px;
+      }
+      .signal i:nth-child(3) {
+        height: 23px;
+      }
+
+      .events {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .live-feed {
+        border-bottom: 1px solid var(--line);
+      }
+      .live-feed h3 {
+        margin: 0;
+        padding: 10px 24px;
+        background: var(--raised);
+        color: var(--accent);
+        font-size: 0.82rem;
+      }
+      .pagination {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+      }
+      #previous {
+        justify-self: end;
+      }
+      #next {
+        --button-background: #26415f;
+        --button-hover: #35577b;
+        justify-self: start;
+        color: var(--accent);
+      }
+      #previous::before,
+      #next::after {
+        width: 6px;
+        height: 6px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(-45deg);
+        content: '';
+      }
+      #previous::before {
+        transform: rotate(135deg);
+      }
+
+      @media (pointer: coarse) {
+        #search,
+        button,
+        .event-filter span {
+          min-height: 44px;
+        }
+      }
+      .event + .event {
+        border-top: 1px solid var(--line);
+      }
+      summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 16px;
+        padding: 15px 24px;
+        cursor: pointer;
+        list-style: none;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary:focus-visible {
+        outline-offset: -4px;
+      }
+      summary:hover,
+      details[open] summary {
+        background: var(--row-hover, var(--raised));
+      }
+      .event-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font: 600 0.88rem/1.5 var(--mono);
+      }
+      .event-name::before {
+        flex: 0 0 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #8194ad;
+        content: '';
+      }
+      .event[data-new] {
+        --row-hover: #9ecaff13;
+        background: var(--live-surface);
+        box-shadow: inset 3px 0 #7aaff2;
+      }
+      .event[data-new] .event-name::before {
+        background: var(--accent);
+        box-shadow: 0 0 0 4px #9ecaff20;
+      }
+      .event-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .new-badge {
+        border-radius: 5px;
+        background: #304e72;
+        padding: 2px 7px;
+        color: var(--accent);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+      .event:not([data-new]) .new-badge {
+        display: none;
+      }
+      summary time {
+        color: var(--muted);
+        font: 0.76rem/1.5 var(--mono);
+        white-space: nowrap;
+      }
+      summary::after {
+        width: 7px;
+        height: 7px;
+        margin-right: 2px;
+        border-right: 1.5px solid var(--muted);
+        border-bottom: 1.5px solid var(--muted);
+        transform: rotate(45deg);
+        content: '';
+      }
+      details[open] summary::after {
+        transform: rotate(225deg);
+      }
+      pre {
+        max-height: 24rem;
+        overflow: auto;
+        margin: 0 24px 16px;
+        padding: 16px;
+        border-radius: 10px;
+        color: var(--ink);
+        background: var(--recessed);
+        font: 0.8rem/1.65 var(--mono);
+        tab-size: 2;
+      }
+      code {
+        font-family: var(--mono);
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .hero,
+        .feed {
+          animation: panel-in 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+        }
+        .feed {
+          animation-delay: 65ms;
+        }
+        .status[data-state='live']::before {
+          animation: live-pulse 1.4s ease-out 2;
+        }
+        summary,
+        button {
+          transition: background-color 150ms ease;
+        }
+        summary::after {
+          transition: transform 180ms ease;
+        }
+        details[open] pre {
+          animation: panel-in 180ms ease-out;
+        }
+      }
+
+      @keyframes panel-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+      }
+
+      @keyframes live-pulse {
+        0% {
+          box-shadow: 0 0 0 0 #b3d4ff75;
+        }
+        75% {
+          box-shadow: 0 0 0 6px #b3d4ff00;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .shell {
+          width: calc(100% - 28px);
+        }
+        main {
+          padding-top: 22px;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        .endpoint {
+          justify-self: start;
+        }
+        .feed-header,
+        summary {
+          padding-inline: 16px;
+        }
+        .tools {
+          width: 100%;
+        }
+        #search {
+          flex: 1 1 12rem;
+          min-width: 0;
+        }
+        summary {
+          gap: 10px;
+        }
+        .event-meta {
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+        }
+        pre {
+          margin-inline: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">D</span>
+          Distributed E-Commerce System
+        </div>
+        <nav class="header-links" aria-label="Documentation">
+          <a class="docs" href="/docs/">Documentation</a>
+          <a class="docs" href="/apidocs">API docs</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero" aria-labelledby="title">
+        <div>
+          <span class="status" id="status" role="status">Connecting</span>
+          <h1 id="title">Audit stream</h1>
+          <p>Review past events and watch new ones arrive live.</p>
+        </div>
+        <dl class="endpoint">
+          <dt>Stream endpoint</dt>
+          <dd><code id="endpoint">/api/v1/audit/stream</code></dd>
+        </dl>
+      </section>
+
+      <section class="feed" aria-labelledby="feed-title">
+        <header class="feed-header">
+          <div>
+            <h2 id="feed-title">Event feed</h2>
+            <p class="count" id="count">0 events</p>
+          </div>
+          <div class="tools">
+            <input
+              id="search"
+              type="search"
+              aria-label="Search displayed event names and payloads"
+              placeholder="Search displayed events…"
+              autocomplete="off"
+            />
+            <div
+              class="event-filter"
+              id="event-filter"
+              role="group"
+              aria-label="Show events"
+            >
+              <label
+                ><input
+                  type="radio"
+                  name="event-filter"
+                  value="all"
+                  checked
+                /><span>All</span></label
+              >
+              <label
+                ><input type="radio" name="event-filter" value="new" /><span
+                  >New</span
+                ></label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="event-filter"
+                  value="previous"
+                /><span>Previous</span></label
+              >
+            </div>
+            <button id="clear" type="button" disabled>Clear feed</button>
+          </div>
+        </header>
+        <div class="history-error" id="history-error" hidden>
+          <span role="status">Couldn’t load event history.</span>
+          <button id="retry-history" type="button">Retry history</button>
+        </div>
+        <noscript
+          ><p class="empty">
+            Enable JavaScript to connect to the audit stream.
+          </p></noscript
+        >
+        <div class="empty" id="empty" hidden>
+          <span class="signal" aria-hidden="true"
+            ><i></i><i></i><i></i><i></i><i></i
+          ></span>
+          <strong id="empty-title"></strong>
+          <p id="empty-description"></p>
+        </div>
+        <section
+          class="live-feed"
+          id="live-feed"
+          aria-labelledby="live-title"
+          hidden
+        >
+          <h3 id="live-title">Live arrivals</h3>
+          <ul class="events" id="live-events"></ul>
+        </section>
+        <ul class="events" id="events" aria-label="Event history"></ul>
+        <nav
+          class="pagination"
+          id="pagination"
+          aria-label="Event history pages"
+          hidden
+        >
+          <button id="previous" type="button" disabled>Previous</button>
+          <span id="page-label" role="status">Page 1</span>
+          <button id="next" type="button" disabled>Next</button>
+        </nav>
+      </section>
+
+      <template id="event-template">
+        <li class="event">
+          <details>
+            <summary>
+              <span class="event-name"></span>
+              <span class="event-meta">
+                <span class="new-badge">New</span>
+                <time></time>
+              </span>
+            </summary>
+            <pre tabindex="0" aria-label="Event payload"><code></code></pre>
+          </details>
+        </li>
+      </template>
+    </main>
+
+    <script>
+      const status = document.querySelector('#status');
+      const count = document.querySelector('#count');
+      const search = document.querySelector('#search');
+      const eventFilter = document.querySelector('#event-filter');
+      const clear = document.querySelector('#clear');
+      const empty = document.querySelector('#empty');
+      const emptyTitle = document.querySelector('#empty-title');
+      const emptyDescription = document.querySelector('#empty-description');
+      const historyError = document.querySelector('#history-error');
+      const events = document.querySelector('#events');
+      const liveFeed = document.querySelector('#live-feed');
+      const liveEvents = document.querySelector('#live-events');
+      const pagination = document.querySelector('#pagination');
+      const previous = document.querySelector('#previous');
+      const next = document.querySelector('#next');
+      const pageLabel = document.querySelector('#page-label');
+      const template = document.querySelector('#event-template');
+      const motion = matchMedia('(prefers-reduced-motion: no-preference)');
+      const clock = new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZoneName: 'short',
+      });
+      const liveLimit = 10;
+      const maxPage = 21_474_837;
+      const liveRows = new Map();
+      let historyRows = new Map();
+      const cleared = new Set();
+      const cursors = new Map();
+      let currentPage = readPagination();
+      let nextCursor = null;
+      let query = '';
+      let filter = eventFilter.querySelector(':checked').value;
+      let historyLoaded = false;
+      let historyRequest;
+      let historyRefresh;
+      let retryPage;
+
+      function updateFeed() {
+        const showLive = filter !== 'previous';
+        const showHistory = filter !== 'new';
+        let visibleLive = 0;
+        let visibleHistory = 0;
+        let historyCount = 0;
+        for (const row of liveRows.values()) {
+          row.hidden = !showLive || !matches(row);
+          visibleLive += Number(!row.hidden);
+        }
+        for (const [id, row] of historyRows) {
+          const included = !liveRows.has(id) && !cleared.has(id);
+          historyCount += Number(included);
+          row.hidden = !showHistory || !included || !matches(row);
+          visibleHistory += Number(!row.hidden);
+        }
+        liveFeed.hidden = visibleLive === 0;
+        const total =
+          (showLive ? liveRows.size : 0) + (showHistory ? historyCount : 0);
+        const visible = visibleLive + visibleHistory;
+        count.textContent = query
+          ? `${visible} of ${total} events`
+          : `${total} ${total === 1 ? 'event' : 'events'}`;
+        clear.disabled = liveRows.size + historyCount === 0;
+        pagination.hidden = !showHistory || !historyLoaded;
+        pageLabel.textContent = `Page ${currentPage.page}`;
+        previous.disabled = Boolean(historyRequest) || currentPage.page === 1;
+        next.disabled =
+          Boolean(historyRequest) ||
+          !nextCursor ||
+          currentPage.page === maxPage;
+        empty.hidden = visible > 0;
+        if (empty.hidden) return;
+
+        if (total) {
+          emptyTitle.textContent = 'No matching events';
+          emptyDescription.textContent =
+            'Try another search or clear the search field.';
+        } else if (
+          showHistory &&
+          (historyRequest || (!historyLoaded && historyError.hidden))
+        ) {
+          emptyTitle.textContent = 'Loading event history';
+          emptyDescription.textContent = '';
+        } else if (showHistory && (!showLive || currentPage.page > 1)) {
+          emptyTitle.textContent = 'No previous events on this page';
+          emptyDescription.textContent = '';
+        } else if (status.dataset.state === 'live') {
+          emptyTitle.textContent = 'Waiting for events';
+          emptyDescription.textContent =
+            'New events will appear here as they arrive.';
+        } else {
+          emptyTitle.textContent = 'No events received';
+          emptyDescription.textContent =
+            'Events appear here when the stream is connected.';
+        }
+      }
+
+      function setStatus(state, label) {
+        status.dataset.state = state;
+        status.textContent = label;
+        updateFeed();
+      }
+
+      function matches(row) {
+        return (
+          !query ||
+          row
+            .querySelector('.event-name')
+            .textContent.toLowerCase()
+            .includes(query) ||
+          row.querySelector('code').textContent.toLowerCase().includes(query)
+        );
+      }
+
+      function createRow(record) {
+        const row = template.content.firstElementChild.cloneNode(true);
+        row.querySelector('.event-name').textContent = record.event || 'Event';
+        const time = new Date(record.createdAt);
+        const timeLabel = row.querySelector('time');
+        timeLabel.dateTime = time.toISOString();
+        timeLabel.textContent = clock.format(time);
+        timeLabel.title = time.toLocaleString(undefined, {
+          timeZoneName: 'long',
+        });
+        row.querySelector('code').textContent = JSON.stringify(
+          record.payload,
+          null,
+          2,
+        );
+        return row;
+      }
+
+      function readPagination() {
+        const params = new URLSearchParams(location.search);
+        const page = Number(params.get('page'));
+        const pageSize = Number(params.get('per_page'));
+        return {
+          page:
+            Number.isInteger(page) && page >= 1 && page <= maxPage ? page : 1,
+          pageSize:
+            Number.isInteger(pageSize) && pageSize >= 1 && pageSize <= 100
+              ? pageSize
+              : 10,
+        };
+      }
+
+      function paginationParams({ page, pageSize }) {
+        return { page: String(page), per_page: String(pageSize) };
+      }
+
+      function writePagination(target, method) {
+        const url = new URL(location.href);
+        for (const [key, value] of Object.entries(paginationParams(target))) {
+          url.searchParams.set(key, value);
+        }
+        if (url.href !== location.href) history[method](history.state, '', url);
+      }
+
+      async function loadHistory(
+        target = readPagination(),
+        push = false,
+        cursor = cursors.get(`${target.pageSize}:${target.page}`),
+      ) {
+        historyRequest?.abort();
+        const request = new AbortController();
+        historyRequest = request;
+        historyError.hidden = true;
+        updateFeed();
+        try {
+          const params = new URLSearchParams(paginationParams(target));
+          if (cursor) params.set('cursor', cursor);
+          const response = await fetch(`/api/v1/audit?${params}`, {
+            signal: request.signal,
+          });
+          if (!response.ok) throw new Error('History request failed');
+          const { data } = await response.json();
+          if (request.signal.aborted) return;
+
+          historyRows = new Map(
+            data.items.map((record) => [
+              record.id,
+              historyRows.get(record.id) ?? createRow(record),
+            ]),
+          );
+          events.replaceChildren(...historyRows.values());
+          if (cursor) cursors.set(`${target.pageSize}:${target.page}`, cursor);
+          currentPage = target;
+          nextCursor = data.nextCursor;
+          historyLoaded = true;
+          if (push) writePagination(target, 'pushState');
+        } catch {
+          if (!request.signal.aborted) {
+            retryPage = { target, push, cursor };
+            historyError.hidden = false;
+          }
+        } finally {
+          if (historyRequest === request) {
+            historyRequest = undefined;
+            updateFeed();
+          }
+        }
+      }
+
+      search.addEventListener('input', () => {
+        query = search.value.trim().toLowerCase();
+        updateFeed();
+      });
+
+      eventFilter.addEventListener('change', (event) => {
+        filter = event.target.value;
+        updateFeed();
+      });
+
+      clear.addEventListener('click', () => {
+        for (const id of historyRows.keys()) cleared.add(id);
+        for (const id of liveRows.keys()) cleared.add(id);
+        liveRows.clear();
+        liveEvents.replaceChildren();
+        search.focus();
+        updateFeed();
+      });
+
+      previous.addEventListener('click', () => {
+        loadHistory({ ...currentPage, page: currentPage.page - 1 }, true);
+      });
+      next.addEventListener('click', () => {
+        loadHistory(
+          { ...currentPage, page: currentPage.page + 1 },
+          true,
+          nextCursor,
+        );
+      });
+      document.querySelector('#retry-history').addEventListener('click', () => {
+        loadHistory(retryPage.target, retryPage.push, retryPage.cursor);
+      });
+      window.addEventListener('popstate', () => {
+        const target = readPagination();
+        writePagination(target, 'replaceState');
+        loadHistory(target);
+      });
+      writePagination(currentPage, 'replaceState');
+
+      const stream = new EventSource(
+        document.querySelector('#endpoint').textContent,
+      );
+      stream.addEventListener('open', () => {
+        setStatus('live', 'Live');
+        if (!historyRequest || !historyLoaded) loadHistory();
+      });
+      stream.addEventListener('error', () => {
+        if (stream.readyState === EventSource.CLOSED) {
+          setStatus('offline', 'Disconnected · reload to retry');
+        } else {
+          setStatus('connecting', 'Reconnecting');
+        }
+        if (!historyLoaded && !historyRequest) loadHistory();
+      });
+
+      stream.addEventListener('message', (message) => {
+        let record;
+        try {
+          record = JSON.parse(message.data);
+        } catch {
+          return;
+        }
+
+        if (!record?.id || cleared.has(record.id) || liveRows.has(record.id))
+          return;
+        const row = createRow(record);
+        row.setAttribute('data-new', '');
+        liveRows.set(record.id, row);
+        liveEvents.prepend(row);
+        // shortcut: show the latest page of live arrivals, older ones are available in history.
+        if (liveRows.size > liveLimit) {
+          const oldestId = liveRows.keys().next().value;
+          liveRows.get(oldestId).remove();
+          liveRows.delete(oldestId);
+          if (currentPage.page === 1 && !historyRefresh) {
+            historyRefresh = setTimeout(() => {
+              historyRefresh = undefined;
+              if (currentPage.page === 1 && !historyRequest) loadHistory();
+            }, 500);
+          }
+        }
+        updateFeed();
+        if (!row.hidden && motion.matches) {
+          row.animate(
+            [
+              { backgroundColor: 'var(--live-flash)' },
+              { backgroundColor: 'var(--live-surface)' },
+            ],
+            { duration: 650, easing: 'ease-out' },
+          );
+        }
+      });
+
+      updateFeed();
+    </script>
+  </body>
+</html>

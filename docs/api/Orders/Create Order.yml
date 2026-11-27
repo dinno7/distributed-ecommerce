@@ -1,0 +1,57 @@
+info:
+  name: Create Order
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiv1}}/orders"
+  headers:
+    - name: Idempotency-Key
+      value: "{{$randomUUID}}"
+  body:
+    type: json
+    data: |-
+      {
+        "customerId": "550e8400-e29b-41d4-a716-446655440000",
+        "items": [
+          {
+            "productId": "019338a0-0000-7000-8000-000000000001",
+            "quantity": 1
+          },
+          {
+            "productId": "019338a0-0000-7000-8000-000000000002",
+            "quantity": 1
+          },
+          {
+            "productId": "019338a0-0000-7000-8000-000000000003",
+            "quantity": 1
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 201) {
+          bru.setVar("created_order_id", res.getBody().data.id);
+          bru.deleteCollectionVar("payment_id");
+          bru.deleteCollectionVar("failed_payment_id");
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  This example orders one of each seeded product. You can also use a product ID from **List Products** or **Create Product**.
+  Use UUIDs for `customerId` and each `productId`, 1–100 distinct products, and integer quantities of 1–100. The server sets prices and checks current physical stock. It reserves that stock after payment.
+
+  Returns `201` with `id`, `customerId`, `status`, `currency`, and `createdAt` in `data`. The initial status is `PENDING_PAYMENT`.
+  Saves `data.id` as `created_order_id` for **Get Latest Payment**.
+  `Idempotency-Key` is required. The example generates a fresh key per send. To test replay, use a fixed key and send the identical body twice. The second response returns the same order with `Idempotent-Replayed: true`.
