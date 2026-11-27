@@ -1,9 +1,15 @@
-import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Logger,
+  OnModuleDestroy,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { MessagePublisher } from '../ports/message-publisher.port';
 import { EventMessage } from '../../domain/value-objects/event-message.vo';
 import { OutboxRelayRepository } from '../ports/outbox.repositor';
 
-export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {
+export abstract class BaseOutboxRelay
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private timer: NodeJS.Timeout | null = null;
   private running = false;
   protected abstract readonly logger: Logger;
@@ -15,7 +21,7 @@ export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {
     private readonly batchSize = 25,
   ) {}
 
-  onModuleInit() {
+  onApplicationBootstrap() {
     this.timer = setInterval(() => void this.tick(), this.pollIntervalMs);
   }
 
@@ -45,6 +51,8 @@ export abstract class BaseOutboxRelay implements OnModuleInit, OnModuleDestroy {
           await this.repo.markFailed(record.id, 3000);
         }
       }
+    } catch (error) {
+      this.logger.warn(`Outbox polling failed: ${String(error)}`);
     } finally {
       this.running = false;
     }
