@@ -1,132 +1,109 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Snap Shop
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Snap Shop is an e-commerce backend that processes orders containing physical products, digital goods, and subscriptions. The NestJS app runs the HTTP API, mock checkout, and background workers. PostgreSQL stores orders and transactional outboxes, and RabbitMQ carries payment and fulfillment messages between modules.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+After a successful payment, the fulfillment workers reserve stock and create shipments for physical items, record access grants for digital items, and activate or extend subscriptions. If one item fails, completed items stay fulfilled. The audit API exposes stored events and a live stream.
 
-## Description
+The demo assumes trusted callers and simulates payment and fulfillment locally.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Run with Docker Compose
 
-## Project setup
+With Docker and Compose installed, start the app image, PostgreSQL, and RabbitMQ.
 
 ```bash
-$ pnpm install
+docker compose up -d
+docker compose logs -f app
 ```
 
-## Compile and run the project
+The app container applies Prisma migrations and seeds the demo catalog before starting the API. It serves the [project docs](http://localhost:7000/docs/) and the [API reference](http://localhost:7000/apidocs/).
+
+Compose uses `ghcr.io/dinno7/distributed-ecommerce:latest`. To run the code in your checkout, build that tag and start the app with image pulls disabled.
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+docker build -t ghcr.io/dinno7/distributed-ecommerce:latest .
+docker compose up -d --wait postgres rabbitmq
+docker compose up -d --pull never app
 ```
 
-## Run tests
+## Run from source
+
+Use Node.js 24 and pnpm 12, as in the Docker image. Start just the dependencies with `docker compose up -d --wait postgres rabbitmq`. If you already started the full stack, run `docker compose stop app` to free port 7000.
+
+Set these values in `.env` for the default local Compose services. If you set different service credentials in Compose, use those in the connection URLs.
+
+```dotenv
+PORT=7000
+DATABASE_URL=postgresql://dinno:1234@127.0.0.1:5432/distributed-ecommerce
+RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672
+```
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm install --frozen-lockfile
+pnpm exec prisma generate --config prisma7.config.ts
+pnpm exec prisma migrate deploy --config prisma7.config.ts
+pnpm exec prisma db seed --config prisma7.config.ts
+pnpm start:dev
 ```
 
-## Deployment
+## Try a mixed order
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Check that `curl -fsS http://localhost:7000/api/ping` returns `pong` in `data`. The seed adds a keyboard, an e-book, and a monthly subscription, so you can try all three fulfillment paths in one order.
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+curl -fsS http://localhost:7000/api/v1/orders \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: mixed-order-demo-1' \
+  -d '{
+    "customerId": "550e8400-e29b-41d4-a716-446655440000",
+    "items": [
+      {"productId": "019338a0-0000-7000-8000-000000000001", "quantity": 1},
+      {"productId": "019338a0-0000-7000-8000-000000000002", "quantity": 1},
+      {"productId": "019338a0-0000-7000-8000-000000000003", "quantity": 1}
+    ]
+  }'
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project, run this and approve the code it prints at [observe.nestjs.com/link](https://observe.nestjs.com/link) - signing up for free if you have no account:
+Copy `data.id` into `ORDER_ID`. Repeat the payment lookup until `data.checkoutUrl` is set. Use a fresh `Idempotency-Key` each time you want to create another order.
 
 ```bash
-$ npx @nestjs/observe link
+ORDER_ID='paste-order-id-here'
+curl -fsS "http://localhost:7000/api/v1/payments?orderId=$ORDER_ID"
 ```
 
-It installs `@nestjs/observe`, wires it into `AppModule` and `main.ts`, and writes the app key and secret into `.env`, which every `nest start` script (`start`, `start:dev`, `start:debug`) then loads. In production, set `OBSERVE_APP_KEY` and `OBSERVE_APP_SECRET` in the environment instead.
-
-Or do it by hand:
+Submit `SUCCESS` using `data.paymentId`, then check the order again until it reaches `COMPLETED`. Order details include item statuses, the latest payment, and shipments.
 
 ```bash
-$ pnpm install @nestjs/observe
+PAYMENT_ID='paste-payment-id-here'
+curl -fsS "http://localhost:7000/api/v1/payments/$PAYMENT_ID/callback" \
+  -H 'Content-Type: application/json' \
+  -d '{"result":"SUCCESS"}'
+curl -fsS "http://localhost:7000/api/v1/orders/$ORDER_ID"
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/sdk) - it takes a single import and an app key.
+Use `GET /api/v1/audit` for event history or `curl -N http://localhost:7000/api/v1/audit/stream` for live events. More requests, including catalog management and payment retries, are in the [Bruno collection](docs/api/).
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+## Tests
 
-## Resources
+Generate Prisma Client first using the source setup above. The end-to-end smoke test connects to RabbitMQ on `localhost:5672`. Run it against a local broker with no app traffic.
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+pnpm test
+pnpm test:e2e
+pnpm test:cov
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- The idempotency store integration suite runs when `TEST_DATABASE_URL` is set. Use a PostgreSQL database where the test user can create schemas. The suite applies the idempotency migration in a temporary schema and drops the schema afterward.
+- The fulfillment suite runs when `FULFILLMENT_TEST_DATABASE_URL` and `FULFILLMENT_TEST_RABBITMQ_URL` are exported. Use an isolated PostgreSQL database and a dedicated RabbitMQ virtual host. The suite creates products and orders and runs the real workers.
 
-## Support
+```bash
+DATABASE_URL="$FULFILLMENT_TEST_DATABASE_URL" pnpm exec prisma migrate deploy --config prisma7.config.ts
+pnpm test:e2e --runInBand fulfillment.e2e-spec.ts
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Fulfillment recovery
 
-## Stay in touch
+- **Out of stock.** Add stock to the product's existing row in `inventories`, then send `POST /api/v1/orders/:id/retry` with a fresh `Idempotency-Key`. Send `{}` to retry all eligible items or `{"itemId":"<order-item-id>"}` to retry one. The original payment and completed items are preserved.
+- **Dead-lettered work.** After fixing the cause, republish the delivery to RabbitMQ's `x.main` exchange with its original routing key, body, and message ID. Acknowledge the dead-letter copy after RabbitMQ confirms the republish. Orders and Fulfillment use persisted workflow state to deduplicate the delivery.
+- **Upgrading to the fulfillment workflow.** Stop older app instances before applying the migrations. The migration restages eligible payment events for existing orders still pending payment. Start the new app to declare the queue bindings and resume delivery.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+See the [project documentation](docs/INDEX.md) and the [fulfillment specification](docs/post-payment-spec.md) for design details and diagrams.
