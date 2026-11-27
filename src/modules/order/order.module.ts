@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { FulfillmentModule } from '../fulfillment/fulfillment.module';
+import { PaymentModule } from '../payment/payment.module';
+import { ProductModule } from '../product/product.module';
 import { OrderProductCatalog } from './app/ports/order-product-catalog.port';
 import {
   OrderPaymentReader,
@@ -31,6 +34,7 @@ import { OrderController } from './presentations/http/order.controller';
 import { OrderWorkflowConsumer } from './presentations/rabbitmq/order-workflow.consumer';
 
 @Module({
+  imports: [ProductModule, PaymentModule, FulfillmentModule],
   controllers: [OrderController],
   providers: [
     CreateOrderUC,

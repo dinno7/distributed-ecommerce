@@ -1,8 +1,13 @@
+import {
+  AmqpConnection,
+  AmqpConnectionManager,
+} from '@golevelup/nestjs-rabbitmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../src/common/infra/persistence/prisma.service';
+import { configureHttp } from '../src/http.config';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -19,14 +24,22 @@ describe('AppController (e2e)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue({})
+      .overrideProvider(AmqpConnectionManager)
+      .useValue(new AmqpConnectionManager())
+      .overrideProvider(AmqpConnection)
+      .useValue({ managedChannel: { addSetup: jest.fn() } })
       .compile();
 
     app = moduleFixture.createNestApplication();
+    configureHttp(app);
     await app.init();
   });
 
-  it('GET /ping responds with pong', () => {
-    return request(app.getHttpServer()).get('/ping').expect(200).expect('pong');
+  it('GET /api/ping responds with pong', async () => {
+    const { body } = await request(app.getHttpServer())
+      .get('/api/ping')
+      .expect(200);
+    expect(body).toMatchObject({ data: 'pong' });
   });
 
   afterAll(async () => {

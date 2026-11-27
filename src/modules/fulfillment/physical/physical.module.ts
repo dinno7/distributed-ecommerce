@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ShipmentQuery } from '../../../common/ports/shipment-query.port';
+import { ProductModule } from '../../product/product.module';
 import { PhysicalStockReservation } from './app/ports/stock-reservation.port';
 import { PhysicalStockReservationAdapter } from './infra/inventory/physical-stock-reservation.adapter';
 import { FulfillmentPersistenceModule } from '../fulfillment-persistence.module';
@@ -9,7 +10,7 @@ import { PrismaPhysicalFulfillment } from './infra/persistence/physical.prisma';
 import { PhysicalConsumer } from './presentation/rabbitmq/physical.consumer';
 
 @Module({
-  imports: [FulfillmentPersistenceModule],
+  imports: [FulfillmentPersistenceModule, ProductModule],
   providers: [
     PhysicalConsumer,
     FulfillPhysicalUC,

@@ -1,9 +1,9 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
-import { LatestPaymentQuery } from '../../../../common/ports/latest-payment-query.port';
+import { MessagePublisher } from '../../../../common/messaging/ports/message-publisher.port';
 import { ProductCatalog } from '../../../../common/ports/product-catalog.port';
-import { ShipmentQuery } from '../../../../common/ports/shipment-query.port';
 import {
   TransactionManager,
   type TransactionCtx,
@@ -50,12 +50,12 @@ describe('CreateOrderUC catalog checks', () => {
       .useValue({
         $transaction: transaction,
       })
+      .overrideProvider(ProductCatalog)
+      .useValue({ findByIdsTx: findProducts })
       .overrideProvider(OrderOutboxRelay)
       .useValue({})
       .useMocker((token) => {
-        if (token === ProductCatalog) return { findByIdsTx: findProducts };
-        if (token === LatestPaymentQuery) return { execute: jest.fn() };
-        if (token === ShipmentQuery) return { listShipments: jest.fn() };
+        if (token === ConfigService || token === MessagePublisher) return {};
       })
       .compile();
     useCase = module.get(CreateOrderUC);
