@@ -1,9 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import appConfig, { validate } from './env.validate';
@@ -14,9 +9,9 @@ import { IdempotencyModule } from '@nestjs/idempotency';
 import { PrismaIdempotencyStore } from './common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { Request, Response } from 'express';
 import { MessagingModule } from './common/messaging/messaging.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -40,19 +35,9 @@ import { PaymentModule } from './modules/payment/payment.module';
     ProductModule,
     OrderModule,
     PaymentModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [PrismaIdempotencyStore],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply((_req: Request, res: Response) => {
-        return res.redirect('/docs');
-      })
-      .forRoutes({
-        method: RequestMethod.GET,
-        path: '/',
-      });
-  }
-}
+export class AppModule {}
