@@ -5,6 +5,10 @@ import type {
   CatalogProduct,
   ProductCatalog,
 } from '../../common/ports/product-catalog.port';
+import type {
+  ProductStockReservation,
+  StockReservationResult,
+} from '../../common/ports/product-stock-reservation.port';
 import { Money } from '../../common/value-objects/money';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { CreateProductDto } from './dto/create-product.dto';
@@ -13,7 +17,7 @@ import { ProductErrors } from './product.errors';
 import { ProductMapper } from './product.mapper';
 
 @Injectable()
-export class ProductService implements ProductCatalog {
+export class ProductService implements ProductCatalog, ProductStockReservation {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateProductDto): Promise<Product> {
@@ -102,6 +106,31 @@ export class ProductService implements ProductCatalog {
       ...product,
       availableStock: inventory?.available ?? null,
     }));
+  }
+
+  async reserveStock(
+    productId: string,
+    quantity: number,
+    tx: TransactionCtx,
+  ): Promise<StockReservationResult> {
+    if (
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      quantity > 2_147_483_647
+    ) {
+      throw new RangeError('Reservation requires a positive 32-bit quantity');
+    }
+    const db = tx as Prisma.TransactionClient;
+    const count = await db.$executeRaw`
+      UPDATE inventories SET available = available - ${quantity}::integer, updated_at = now()
+      WHERE product_id = ${productId}::uuid AND available >= ${quantity}::integer
+    `;
+    if (count === 1) return 'RESERVED';
+    const inventory = await db.inventory.findUnique({
+      where: { productId },
+      select: { productId: true },
+    });
+    return inventory ? 'OUT_OF_STOCK' : 'INVENTORY_UNAVAILABLE';
   }
 
   async remove(id: string): Promise<void> {
