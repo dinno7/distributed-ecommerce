@@ -21,9 +21,11 @@ export class AuditRepositoryPrisma {
     };
   }
 
-  async recordLog(auditLog: AuditLog): Promise<void> {
-    await this.db.auditLog.create({
+  async recordLog(auditLog: AuditLog): Promise<boolean> {
+    const { count } = await this.db.auditLog.createMany({
       data: AuditMapperPrisma.toPersistence(auditLog),
+      skipDuplicates: true,
     });
+    return count > 0;
   }
 }
