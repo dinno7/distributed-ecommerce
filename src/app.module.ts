@@ -11,6 +11,7 @@ import { PersistenceModule } from './common';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { PrismaIdempotencyStore } from './common';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { TerminusModule } from '@nestjs/terminus';
 import { join } from 'path';
 import { MessagingModule } from './common/messaging/messaging.module';
 import { QUEUES } from './common/contracts/queues';
@@ -56,6 +57,7 @@ const workflowQueues = [
     }),
     MessagingModule.forRoot(workflowQueues),
     PersistenceModule,
+    TerminusModule,
     ProductModule,
     PaymentModule,
     FulfillmentModule,

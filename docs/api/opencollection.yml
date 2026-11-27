@@ -13,6 +13,11 @@ config:
         username: ""
         password: ""
       bypassProxy: ""
+
+request:
+  variables:
+    - name: created_order_id
+      value: 01a21ed7-5ee8-7bc1-8b82-fc48c18091ae
 bundled: false
 extensions:
   bruno:

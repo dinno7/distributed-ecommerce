@@ -23,6 +23,7 @@ runtime:
       code: |-
         if (res.getStatus() === 201) {
           bru.setCollectionVar("created_product_id", res.getBody().data.id);
+          bru.setVar("created_product_id", res.getBody().data.id);
         }
 
 settings:

@@ -7,15 +7,16 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [],
-    }).compile();
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     appController = app.get<AppController>(AppController);
   });
 
   describe('ping', () => {
     it('should return pong', () => {
-      expect(appController.health()).toBe('pong');
+      expect(appController.ping()).toBe('pong');
     });
   });
 });

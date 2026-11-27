@@ -5,19 +5,28 @@ info:
 
 http:
   method: POST
-  url: '{{apiv1}}/orders'
+  url: "{{apiv1}}/orders"
   headers:
     - name: Idempotency-Key
-      value: '{{$randomUUID}}'
+      value: "{{$randomUUID}}"
   body:
     type: json
     data: |-
       {
         "customerId": "550e8400-e29b-41d4-a716-446655440000",
         "items": [
-          { "productId": "019338a0-0000-7000-8000-000000000001", "quantity": 1 },
-          { "productId": "019338a0-0000-7000-8000-000000000002", "quantity": 1 },
-          { "productId": "019338a0-0000-7000-8000-000000000003", "quantity": 1 }
+          {
+            "productId": "019338a0-0000-7000-8000-000000000001",
+            "quantity": 1
+          },
+          {
+            "productId": "019338a0-0000-7000-8000-000000000002",
+            "quantity": 1
+          },
+          {
+            "productId": "019338a0-0000-7000-8000-000000000003",
+            "quantity": 1
+          }
         ]
       }
   auth: inherit
@@ -27,7 +36,7 @@ runtime:
     - type: after-response
       code: |-
         if (res.getStatus() === 201) {
-          bru.setCollectionVar("created_order_id", res.getBody().data.id);
+          bru.setVar("created_order_id", res.getBody().data.id);
           bru.deleteCollectionVar("payment_id");
           bru.deleteCollectionVar("failed_payment_id");
         }

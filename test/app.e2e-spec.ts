@@ -11,6 +11,8 @@ import { configureHttp } from '../src/http.config';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  const queryRaw = jest.fn();
+  const rabbitmq = { connected: true, managedChannel: { addSetup: jest.fn() } };
 
   beforeAll(async () => {
     jest.replaceProperty(process, 'env', {
@@ -23,11 +25,11 @@ describe('AppController (e2e)', () => {
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
-      .useValue({})
+      .useValue({ $queryRaw: queryRaw })
       .overrideProvider(AmqpConnectionManager)
       .useValue(new AmqpConnectionManager())
       .overrideProvider(AmqpConnection)
-      .useValue({ managedChannel: { addSetup: jest.fn() } })
+      .useValue(rabbitmq)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -35,11 +37,55 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  beforeEach(() => {
+    queryRaw.mockReset();
+    queryRaw.mockResolvedValue([{ '?column?': 1 }]);
+    rabbitmq.connected = true;
+  });
+
   it('GET /api/ping responds with pong', async () => {
     const { body } = await request(app.getHttpServer())
       .get('/api/ping')
       .expect(200);
     expect(body).toMatchObject({ data: 'pong' });
+  });
+
+  it('GET /api/health reports both dependencies up', async () => {
+    const { body } = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200);
+    expect(body.data).toMatchObject({
+      status: 'ok',
+      details: { postgres: { status: 'up' }, rabbitmq: { status: 'up' } },
+    });
+    expect(queryRaw).toHaveBeenCalledWith(['SELECT 1']);
+  });
+
+  it('GET /api/health returns 503 when PostgreSQL fails', async () => {
+    queryRaw.mockRejectedValue(new Error('connection details'));
+
+    const { body } = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(503);
+    expect(body).toMatchObject({
+      status: 'error',
+      details: {
+        postgres: { status: 'down', message: 'PostgreSQL probe failed' },
+        rabbitmq: { status: 'up' },
+      },
+    });
+  });
+
+  it('GET /api/health returns 503 when RabbitMQ disconnects', async () => {
+    rabbitmq.connected = false;
+
+    const { body } = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(503);
+    expect(body).toMatchObject({
+      status: 'error',
+      details: { postgres: { status: 'up' }, rabbitmq: { status: 'down' } },
+    });
   });
 
   afterAll(async () => {

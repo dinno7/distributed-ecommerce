@@ -19,11 +19,13 @@ runtime:
           const payment = res.getBody().data;
           if (payment.paymentId && payment.status !== "PENDING") {
             bru.setCollectionVar("payment_id", payment.paymentId);
+            bru.setVar("payment_id", payment.paymentId);
           } else {
             bru.deleteCollectionVar("payment_id");
           }
           if (payment.status === "FAILED") {
             bru.setCollectionVar("failed_payment_id", payment.paymentId);
+            bru.setVar("failed_payment_id", payment.paymentId);
           } else {
             bru.deleteCollectionVar("failed_payment_id");
           }
