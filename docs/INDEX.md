@@ -1,6 +1,6 @@
 # Introduction
 
-Snap Shop processes mixed orders asynchronously with NestJS, PostgreSQL, and RabbitMQ.
+The distributed ecommerce system processes mixed orders asynchronously with NestJS, PostgreSQL, and RabbitMQ.
 
 Open the [API reference](/apidocs/) for runnable Bruno request examples.
 

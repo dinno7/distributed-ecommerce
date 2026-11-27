@@ -9,13 +9,7 @@ The interview reviewer needs to start the app against a fresh database and exerc
 
 ## Decision
 
-Build one application image with Prisma, the migration files, the seed script, and the generated documentation. Compose starts the app after PostgreSQL and RabbitMQ are healthy. The app container runs `prisma migrate deploy`, then `prisma db seed`, then starts NestJS. Start the published image with `docker compose up -d`. To run the current checkout, build the tag Compose uses and start the app with pulls disabled.
-
-```sh
-docker build -t ghcr.io/dinno7/distributed-ecommerce:latest .
-docker compose up -d --wait postgres rabbitmq
-docker compose up -d --pull never app
-```
+Run `docker compose up -d` to start the stack with the published app image. To build from the checkout, uncomment `pull_policy: build` and the `build:` block under `services.app` in `compose.yml`, then run `docker compose up -d --build`. The app image includes Prisma, the migration files, the seed script, and the generated documentation. Compose starts the app after PostgreSQL and RabbitMQ are healthy. The app container runs `prisma migrate deploy`, then `prisma db seed`, then starts NestJS.
 
 ## Alternatives considered
 
