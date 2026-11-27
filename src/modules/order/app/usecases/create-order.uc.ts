@@ -1,20 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PRODUCT_CATALOG_MAX_IDS } from '../../../../common/contracts/product-catalog.rpc';
 import type { UseCase } from '../../../../common/ports/usecase.port';
 import { ProductType } from '../../../../common/types/product-type';
 import { Order } from '../../domain/order.entity';
 import { OrderProductCatalog } from '../ports/order-product-catalog.port';
-import {
-  OrderCreatedEvent,
-  TransactionCtx,
-  TransactionManager,
-} from '../../../../common';
+import { OrderCreatedEvent, TransactionManager } from '../../../../common';
 import { OrderRepository } from '../ports/order.repository';
 import { OrderOutboxRepository } from '../ports/order-outbox.repository';
 
 export interface CreateOrderInput {
   customerId: string;
   items: readonly { productId: string; quantity: number }[];
-  tx?: TransactionCtx;
 }
 
 @Injectable()
@@ -26,22 +22,19 @@ export class CreateOrderUC implements UseCase<CreateOrderInput, Order> {
     private readonly txManager: TransactionManager,
   ) {}
 
-  execute(input: CreateOrderInput): Promise<Order> {
-    if (input.tx) return this.create(input, input.tx);
-    return this.txManager.run((transaction) => this.create(input, transaction));
-  }
-
-  private async create(
-    { customerId, items }: CreateOrderInput,
-    tx: TransactionCtx,
-  ): Promise<Order> {
+  async execute({ customerId, items }: CreateOrderInput): Promise<Order> {
     if (items.length === 0) throw new RangeError('An order requires an item');
+    if (items.length > PRODUCT_CATALOG_MAX_IDS) {
+      throw new RangeError(
+        `An order supports up to ${PRODUCT_CATALOG_MAX_IDS} items`,
+      );
+    }
     const productIds = items.map(({ productId }) => productId.toLowerCase());
     if (new Set(productIds).size !== items.length) {
       throw new Error('An order requires distinct products');
     }
 
-    const products = await this.catalog.findByIds(productIds, tx);
+    const products = await this.catalog.findByIds(productIds);
     const productsById = new Map(
       products.map((product) => [product.productId, product]),
     );
@@ -62,18 +55,19 @@ export class CreateOrderUC implements UseCase<CreateOrderInput, Order> {
       order.addItem({ ...product, quantity });
     }
 
-    await this.orderRepo.create(order, tx);
-    await this.orderOutboxRepo.stage(
-      new OrderCreatedEvent({
-        orderId: order.id,
-        customerId,
-        currency: order.currency,
-        itemCount: order.itemsCount,
-        totalMinor: order.totalMinor.toString(),
-      }),
-      tx,
-    );
-
+    await this.txManager.run(async (tx) => {
+      await this.orderRepo.create(order, tx);
+      await this.orderOutboxRepo.stage(
+        new OrderCreatedEvent({
+          orderId: order.id,
+          customerId,
+          currency: order.currency,
+          itemCount: order.itemsCount,
+          totalMinor: order.totalMinor.toString(),
+        }),
+        tx,
+      );
+    });
     return order;
   }
 }

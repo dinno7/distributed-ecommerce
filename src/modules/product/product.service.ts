@@ -2,10 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PrismaService, TransactionCtx } from '../../common';
 import type {
-  CatalogProduct,
-  ProductCatalog,
-} from '../../common/ports/product-catalog.port';
-import type {
   ProductStockReservation,
   StockReservationResult,
 } from '../../common/ports/product-stock-reservation.port';
@@ -17,7 +13,7 @@ import { ProductErrors } from './product.errors';
 import { ProductMapper } from './product.mapper';
 
 @Injectable()
-export class ProductService implements ProductCatalog, ProductStockReservation {
+export class ProductService implements ProductStockReservation {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateProductDto): Promise<Product> {
@@ -85,12 +81,8 @@ export class ProductService implements ProductCatalog, ProductStockReservation {
     return ProductMapper.toDomain(row, row.inventory?.available);
   }
 
-  async findByIdsTx(
-    ids: readonly string[],
-    tx: TransactionCtx,
-  ): Promise<readonly CatalogProduct[]> {
-    const db = tx as Prisma.TransactionClient;
-    const rows = await db.product.findMany({
+  async findByIds(ids: readonly string[]) {
+    const rows = await this.prisma.product.findMany({
       where: { id: { in: [...ids] } },
       select: {
         id: true,

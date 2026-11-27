@@ -8,7 +8,6 @@ export * from './infra/retry/retry.module';
 export * from './messaging/ports/message-consumer.port';
 export * from './messaging/ports/message-publisher.port';
 export * from './idempotency/prisma-idempotency.store';
-export * from './ports/product-catalog.port';
 export * from './ports/usecase.port';
 export * from './ports/retrier.port';
 export * from './ports/transaction.port';

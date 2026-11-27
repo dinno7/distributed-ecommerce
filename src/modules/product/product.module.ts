@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ProductCatalog } from '../../common/ports/product-catalog.port';
 import { ProductStockReservation } from '../../common/ports/product-stock-reservation.port';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
+import { ProductCatalogRpcConsumer } from './product-catalog.rpc.consumer';
 
 @Module({
   controllers: [ProductController],
   providers: [
     ProductService,
-    { provide: ProductCatalog, useExisting: ProductService },
+    ProductCatalogRpcConsumer,
     { provide: ProductStockReservation, useExisting: ProductService },
   ],
-  exports: [ProductCatalog, ProductStockReservation],
+  exports: [ProductStockReservation],
 })
 export class ProductModule {}

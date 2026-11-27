@@ -12,6 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import type { CreateOrderInput } from '../../../app/usecases/create-order.uc';
+import { PRODUCT_CATALOG_MAX_IDS } from '../../../../../common/contracts/product-catalog.rpc';
 
 class CreateOrderItemDto {
   @IsUUID()
@@ -23,13 +24,13 @@ class CreateOrderItemDto {
   quantity: number;
 }
 
-export class CreateOrderDto implements Omit<CreateOrderInput, 'tx'> {
+export class CreateOrderDto implements CreateOrderInput {
   @IsUUID()
   customerId: string;
 
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMaxSize(100)
+  @ArrayMaxSize(PRODUCT_CATALOG_MAX_IDS)
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)

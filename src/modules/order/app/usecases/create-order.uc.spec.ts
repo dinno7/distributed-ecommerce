@@ -2,12 +2,11 @@ import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PersistenceModule } from '../../../../common/infra/persistence/persistence.module';
 import { PrismaService } from '../../../../common/infra/persistence/prisma.service';
-import { MessagePublisher } from '../../../../common/messaging/ports/message-publisher.port';
-import { ProductCatalog } from '../../../../common/ports/product-catalog.port';
+import { PRODUCT_CATALOG_RPC } from '../../../../common/contracts/product-catalog.rpc';
 import {
-  TransactionManager,
-  type TransactionCtx,
-} from '../../../../common/ports/transaction.port';
+  MessagePublisher,
+  MessageRequestTimeoutError,
+} from '../../../../common/messaging/ports/message-publisher.port';
 import { ProductType } from '../../../../common/types/product-type';
 import { OrderModule } from '../../order.module';
 import { OrderOutboxRelay } from '../outbox.relay';
@@ -26,7 +25,7 @@ describe('CreateOrderUC catalog checks', () => {
   const mug = {
     id: '019338a0-0000-7000-8000-00000000000a',
     type: ProductType.PHYSICAL,
-    unitPriceMinor: 250n,
+    unitPriceMinor: '250',
     availableStock: 3,
     subscriptionDays: null,
     digitalMetadata: null,
@@ -34,7 +33,7 @@ describe('CreateOrderUC catalog checks', () => {
   const book = {
     id: '019338a0-0000-7000-8000-00000000000b',
     type: ProductType.DIGITAL,
-    unitPriceMinor: 100n,
+    unitPriceMinor: '100',
     availableStock: null,
     subscriptionDays: null,
     digitalMetadata: { format: 'epub' },
@@ -50,12 +49,11 @@ describe('CreateOrderUC catalog checks', () => {
       .useValue({
         $transaction: transaction,
       })
-      .overrideProvider(ProductCatalog)
-      .useValue({ findByIdsTx: findProducts })
       .overrideProvider(OrderOutboxRelay)
       .useValue({})
       .useMocker((token) => {
-        if (token === ConfigService || token === MessagePublisher) return {};
+        if (token === ConfigService) return {};
+        if (token === MessagePublisher) return { request: findProducts };
       })
       .compile();
     useCase = module.get(CreateOrderUC);
@@ -79,19 +77,29 @@ describe('CreateOrderUC catalog checks', () => {
     });
 
     expect(findProducts).toHaveBeenCalledTimes(1);
-    expect(findProducts).toHaveBeenCalledWith([mug.id, book.id], tx);
+    expect(findProducts).toHaveBeenCalledWith({
+      exchange: PRODUCT_CATALOG_RPC.exchange,
+      routingKey: PRODUCT_CATALOG_RPC.routingKey,
+      payload: { ids: [mug.id, book.id] },
+    });
+    expect(findProducts.mock.invocationCallOrder[0]).toBeLessThan(
+      transaction.mock.invocationCallOrder[0],
+    );
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(tx.order.create).toHaveBeenCalledTimes(1);
+    expect(tx.orderOutbox.create).toHaveBeenCalledTimes(1);
     expect(order.totalMinor).toBe(850n);
     expect(order.items).toMatchObject([
       {
         productId: mug.id,
         productType: mug.type,
-        unitPriceMinor: mug.unitPriceMinor,
+        unitPriceMinor: 250n,
         quantity: 3,
       },
       {
         productId: book.id,
         productType: book.type,
-        unitPriceMinor: book.unitPriceMinor,
+        unitPriceMinor: 100n,
         quantity: 1,
       },
     ]);
@@ -101,9 +109,7 @@ describe('CreateOrderUC catalog checks', () => {
     findProducts.mockResolvedValueOnce([book, mug]);
 
     const catalog = module.get(OrderProductCatalog);
-    const products = await module
-      .get(TransactionManager)
-      .run((transaction) => catalog.findByIds([book.id, mug.id], transaction));
+    const products = await catalog.findByIds([book.id, mug.id]);
 
     expect(products).toMatchObject([
       {
@@ -115,28 +121,7 @@ describe('CreateOrderUC catalog checks', () => {
     ]);
   });
 
-  it('writes the order and outbox using the supplied transaction', async () => {
-    findProducts.mockResolvedValueOnce([book]);
-    const createOrder = jest.fn();
-    const stageEvent = jest.fn();
-    const callerTx = {
-      order: { create: createOrder },
-      orderOutbox: { create: stageEvent },
-    };
-
-    await useCase.execute({
-      customerId: 'customer',
-      items: [{ productId: book.id, quantity: 1 }],
-      tx: callerTx as TransactionCtx,
-    });
-
-    expect(transaction).not.toHaveBeenCalled();
-    expect(findProducts).toHaveBeenCalledWith([book.id], callerTx);
-    expect(createOrder).toHaveBeenCalledTimes(1);
-    expect(stageEvent).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns a bad request error for a product missing from the catalog', async () => {
+  it('returns 404 for a product missing from the catalog', async () => {
     findProducts.mockResolvedValueOnce([]);
 
     await expect(
@@ -148,6 +133,36 @@ describe('CreateOrderUC catalog checks', () => {
       message: `Product ${mug.id} not found`,
       response: { statusCode: 404 },
     });
+  });
+
+  it.each([
+    [new MessageRequestTimeoutError(), 504],
+    [new Error('Broker unavailable'), 503],
+  ])(
+    'rejects an RPC failure before opening a transaction (%p)',
+    async (error, status) => {
+      findProducts.mockRejectedValueOnce(error);
+
+      await expect(
+        useCase.execute({
+          customerId: 'customer',
+          items: [{ productId: mug.id, quantity: 1 }],
+        }),
+      ).rejects.toMatchObject({ status });
+      expect(transaction).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects malformed catalog replies before opening a transaction', async () => {
+    findProducts.mockResolvedValueOnce([{ ...mug, unitPriceMinor: 250 }]);
+
+    await expect(
+      useCase.execute({
+        customerId: 'customer',
+        items: [{ productId: mug.id, quantity: 1 }],
+      }),
+    ).rejects.toMatchObject({ status: 502 });
+    expect(transaction).not.toHaveBeenCalled();
   });
 
   it('rejects a physical quantity above available stock', async () => {

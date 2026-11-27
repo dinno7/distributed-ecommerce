@@ -1,9 +1,14 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection, RpcTimeoutError } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { ConfirmChannel, Message } from 'amqplib';
 import { randomUUID } from 'node:crypto';
 import type { EventMessage } from '../../domain/value-objects/event-message.vo';
-import type { MessagePublisher } from '../ports/message-publisher.port';
+import { isPositiveInt32 } from '../../utils/positive-int32';
+import {
+  MessageRequestTimeoutError,
+  type MessagePublisher,
+  type MessageRequest,
+} from '../ports/message-publisher.port';
 
 @Injectable()
 export class RabbitMQTopicPublisher implements MessagePublisher, OnModuleInit {
@@ -24,6 +29,38 @@ export class RabbitMQTopicPublisher implements MessagePublisher, OnModuleInit {
         return Promise.resolve();
       },
     );
+  }
+
+  async request<T>({
+    exchange,
+    routingKey,
+    payload,
+    timeoutMs = 5_000,
+  }: MessageRequest): Promise<T> {
+    if (!isPositiveInt32(timeoutMs)) {
+      throw new RangeError('RPC timeout must be a positive 32-bit integer');
+    }
+
+    // Bound the managed-channel publish as well as the reply wait.
+    const publishOptions = {
+      contentType: 'application/json',
+      timeout: timeoutMs,
+    };
+    try {
+      return await this.amqpConnection.request<T>({
+        exchange,
+        routingKey,
+        payload,
+        timeout: timeoutMs,
+        expiration: String(timeoutMs),
+        publishOptions,
+      });
+    } catch (error) {
+      if (error instanceof RpcTimeoutError) {
+        throw new MessageRequestTimeoutError(error.message, { cause: error });
+      }
+      throw error;
+    }
   }
 
   async publish<T>({

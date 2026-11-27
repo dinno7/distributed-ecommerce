@@ -50,6 +50,11 @@ export class MessagingModule {
             ],
             exchanges: [
               {
+                name: EXCHANGES.RPC,
+                type: 'direct',
+                options: { durable: true },
+              },
+              {
                 name: EXCHANGES.AUDIT,
                 type: 'fanout',
                 createExchangeIfNotExists: true,
