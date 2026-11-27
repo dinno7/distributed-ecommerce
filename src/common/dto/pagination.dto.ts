@@ -9,14 +9,14 @@ export class PaginationDto {
   @IsInt()
   @Min(1)
   @Max(1 + Math.floor(2_147_483_647 / maxPageSize))
-  private page = 1;
+  page = 1;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(maxPageSize)
-  private per_page = 10;
+  per_page = 10;
 
   get take(): number {
     return this.per_page;
