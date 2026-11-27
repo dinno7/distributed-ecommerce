@@ -134,155 +134,16 @@ export class PaymentTimedOutEvent extends EventMessage<PaymentTimedOutEventPaylo
   }
 }
 
-export interface DigitalStartedEventPayload {
+export interface FulfillmentItemMessage {
   orderId: string;
   orderItemId: string;
+  attemptNo: number;
 }
 
-export class DigitalStartedEvent extends EventMessage<DigitalStartedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.DigitalStarted;
-
-  constructor(payload: DigitalStartedEventPayload) {
-    super(payload, DigitalStartedEvent.ROUTING_KEY);
-  }
-}
-
-export interface DigitalSucceededEventPayload {
-  orderId: string;
-  orderItemId: string;
-  entitlementId: string;
-  accessKey: string;
-}
-
-export class DigitalSucceededEvent extends EventMessage<DigitalSucceededEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.DigitalSucceeded;
-
-  constructor(payload: DigitalSucceededEventPayload) {
-    super(payload, DigitalSucceededEvent.ROUTING_KEY);
-  }
-}
-
-export interface DigitalFailedEventPayload {
-  orderId: string;
-  orderItemId: string;
-  errorCode: string;
-  reason: string;
-  retryable: boolean;
-}
-
-export class DigitalFailedEvent extends EventMessage<DigitalFailedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.DigitalFailed;
-
-  constructor(payload: DigitalFailedEventPayload) {
-    super(payload, DigitalFailedEvent.ROUTING_KEY);
-  }
-}
-
-export interface SubscriptionStartedEventPayload {
-  orderId: string;
-  orderItemId: string;
-}
-
-export class SubscriptionStartedEvent extends EventMessage<SubscriptionStartedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionStarted;
-
-  constructor(payload: SubscriptionStartedEventPayload) {
-    super(payload, SubscriptionStartedEvent.ROUTING_KEY);
-  }
-}
-
-export interface SubscriptionSucceededEventPayload {
-  orderId: string;
-  orderItemId: string;
-  subscriptionId: string;
-  expiresAt: string;
-}
-
-export class SubscriptionSucceededEvent extends EventMessage<SubscriptionSucceededEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionSucceeded;
-
-  constructor(payload: SubscriptionSucceededEventPayload) {
-    super(payload, SubscriptionSucceededEvent.ROUTING_KEY);
-  }
-}
-
-export interface SubscriptionFailedEventPayload {
-  orderId: string;
-  orderItemId: string;
-  errorCode: string;
-  reason: string;
-  retryable: boolean;
-}
-
-export class SubscriptionFailedEvent extends EventMessage<SubscriptionFailedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.SubscriptionFailed;
-
-  constructor(payload: SubscriptionFailedEventPayload) {
-    super(payload, SubscriptionFailedEvent.ROUTING_KEY);
-  }
-}
-
-export interface PhysicalStartedEventPayload {
-  orderId: string;
-  orderItemId: string;
+export interface FulfillmentCommandPayload extends FulfillmentItemMessage {
+  customerId: string;
   productId: string;
   quantity: number;
-}
-
-export class PhysicalStartedEvent extends EventMessage<PhysicalStartedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalStarted;
-
-  constructor(payload: PhysicalStartedEventPayload) {
-    super(payload, PhysicalStartedEvent.ROUTING_KEY);
-  }
-}
-
-export interface PhysicalShipmentCreatedEventPayload {
-  orderId: string;
-  orderItemId: string;
-  shipmentId: string;
-  trackingNumber: string;
-  carrier: string;
-}
-
-export class PhysicalShipmentCreatedEvent extends EventMessage<PhysicalShipmentCreatedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalShipmentCreated;
-
-  constructor(payload: PhysicalShipmentCreatedEventPayload) {
-    super(payload, PhysicalShipmentCreatedEvent.ROUTING_KEY);
-  }
-}
-
-export interface PhysicalSucceededEventPayload {
-  orderId: string;
-  orderItemId: string;
-  reservationId: string;
-  shipmentId: string;
-  trackingNumber: string;
-}
-
-export class PhysicalSucceededEvent extends EventMessage<PhysicalSucceededEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalSucceeded;
-
-  constructor(payload: PhysicalSucceededEventPayload) {
-    super(payload, PhysicalSucceededEvent.ROUTING_KEY);
-  }
-}
-
-export interface PhysicalFailedEventPayload {
-  orderId: string;
-  orderItemId: string;
-  errorCode: string;
-  reason: string;
-  retryable: boolean;
-}
-
-export class PhysicalFailedEvent extends EventMessage<PhysicalFailedEventPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.PhysicalFailed;
-
-  constructor(payload: PhysicalFailedEventPayload) {
-    super(payload, PhysicalFailedEvent.ROUTING_KEY);
-  }
 }
 
 export interface ChargePaymentCommandPayload {
@@ -301,53 +162,27 @@ export class ChargePaymentCommand extends EventMessage<ChargePaymentCommandPaylo
   }
 }
 
-export interface GrantDigitalCommandPayload {
-  orderId: string;
-  orderItemId: string;
-  customerId: string;
-  productId: string;
-  quantity: number;
-  metadata: Record<string, unknown>;
-}
-
-export class GrantDigitalCommand extends EventMessage<GrantDigitalCommandPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.GrantDigital;
-
-  constructor(payload: GrantDigitalCommandPayload) {
+export class GrantDigitalCommand extends EventMessage<FulfillmentCommandPayload> {
+  static readonly ROUTING_KEY = ROUTING_KEYS.GrantDigital;
+  constructor(payload: FulfillmentCommandPayload) {
     super(payload, GrantDigitalCommand.ROUTING_KEY);
   }
 }
 
-export interface ActivateSubscriptionCommandPayload {
-  orderId: string;
-  orderItemId: string;
-  customerId: string;
-  productId: string;
-  quantity: number;
-  durationDays: number;
+export interface ActivateSubscriptionCommandPayload extends FulfillmentCommandPayload {
+  durationDays: number | null;
 }
 
 export class ActivateSubscriptionCommand extends EventMessage<ActivateSubscriptionCommandPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.ActivateSubscription;
-
+  static readonly ROUTING_KEY = ROUTING_KEYS.ActivateSubscription;
   constructor(payload: ActivateSubscriptionCommandPayload) {
     super(payload, ActivateSubscriptionCommand.ROUTING_KEY);
   }
 }
 
-export interface FulfillPhysicalCommandPayload {
-  orderId: string;
-  orderItemId: string;
-  customerId: string;
-  productId: string;
-  quantity: number;
-  shippingAddress?: Record<string, unknown>;
-}
-
-export class FulfillPhysicalCommand extends EventMessage<FulfillPhysicalCommandPayload> {
-  static ROUTING_KEY: string = ROUTING_KEYS.FulfillPhysical;
-
-  constructor(payload: FulfillPhysicalCommandPayload) {
+export class FulfillPhysicalCommand extends EventMessage<FulfillmentCommandPayload> {
+  static readonly ROUTING_KEY = ROUTING_KEYS.FulfillPhysical;
+  constructor(payload: FulfillmentCommandPayload) {
     super(payload, FulfillPhysicalCommand.ROUTING_KEY);
   }
 }
