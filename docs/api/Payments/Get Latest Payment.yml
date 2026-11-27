@@ -12,7 +12,7 @@ runtime:
   scripts:
     - type: before-request
       code: |-
-        if (!bru.getVar("created_order_id")) bru.runner.skipRequest();
+        if (!bru.getCollectionVar("created_order_id")) bru.runner.skipRequest();
     - type: after-response
       code: |-
         if (res.getStatus() === 200) {
@@ -20,14 +20,16 @@ runtime:
           if (payment.paymentId && payment.status !== "PENDING") {
             bru.setCollectionVar("payment_id", payment.paymentId);
           } else {
-            bru.deleteVar("payment_id");
+            bru.deleteCollectionVar("payment_id");
           }
           if (payment.status === "FAILED") {
             bru.setCollectionVar("failed_payment_id", payment.paymentId);
+          } else {
+            bru.deleteCollectionVar("failed_payment_id");
           }
         }
 
 docs: |-
   Run **Create Order** first. A `404` means no payment attempt exists yet. After creating an order, poll until a checkout URL is available.
-  Returns `200` with `paymentId`, `status`, `checkoutUrl`, `amountMinor` as a decimal string, and `currency` in `data`. The first pending checkout has a null `paymentId`, and `checkoutUrl` is present when checkout is ready. A failed payment includes `failureCode`.
+  Returns `200` with `paymentId`, `status`, `checkoutUrl`, `amountMinor` as a decimal string, and `currency` in `data`. The first pending checkout has a null `paymentId`, and later pending checkouts expose their payment IDs. The mock `checkoutUrl` is a readiness signal. Use **Get Mock Checkout** to read the payment via the API. A failed payment includes `failureCode`.
   Saves the payment ID for **Get Mock Checkout** and **Submit Mock Callback**. A missing or invalid `orderId` query parameter returns `400`.

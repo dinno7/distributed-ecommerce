@@ -16,8 +16,10 @@ command = "mdbook-mermaid"
 
 [output.html]
 no-section-label = true
+git-repository-url = "https://github.com/dinno7/distributed-ecommerce"
 additional-js = [
   "additionals/mermaid.min.js",
   "additionals/svg-pan-zoom.min.js",
   "additionals/mermaid-init.js",
+  "additionals/init.js",
 ]

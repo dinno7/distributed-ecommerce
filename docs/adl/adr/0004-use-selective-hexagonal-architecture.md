@@ -10,16 +10,17 @@ Orders, payments, and fulfillment coordinate state changes, concurrency rules, a
 ## Decision
 
 - Use hexagonal architecture in Orders, Payments, and Fulfillment. HTTP controllers and RabbitMQ consumers call application use cases. Use cases apply domain rules and persist state through repository ports implemented by Prisma-backed infrastructure adapters.
-- Use a three-layer design for Product and other simple modules such as Audit and Health. Transport calls the application service, and the service delegates database work to a concrete data-access component. Product CRUD uses this structure without a repository interface or implementation.
-- Keep Prisma clients, generated database types, and SQL in infrastructure. This boundary applies to application services, use cases, and domain code in both module styles.
-- Use `TransactionManager.runTx` for explicit transaction boundaries. Application code passes the same opaque `TransactionCtx` to every participating repository or data-access operation. `PrismaTransactionManager` starts the database transaction, and infrastructure uses its transaction-scoped client for queries. State changes and their outbox records commit or roll back together.
+- Keep Product and Audit simple. Product's controller calls a Prisma-backed service. Audit's controller and consumer use a concrete Prisma repository.
+- Keep Prisma clients, generated database types, and SQL in infrastructure for the hexagonal workflow modules.
+- Use `TransactionManager.run` for explicit transactions. `PrismaTransactionManager` starts the transaction and exposes it as an opaque `TransactionCtx`. Participating modules access their tables through their own adapters. State changes and their module-owned outbox records commit or roll back together.
+- Handle HTTP request idempotency at the transport boundary with `@nestjs/idempotency`. Opted-in routes share the PostgreSQL `idempotency_keys` table through `PrismaIdempotencyStore`. The interceptor stores the response after the use case commits.
 
 ## Consequences
 
-Workflow tests can exercise domain rules and use cases through test implementations of repository and transaction ports. PostgreSQL integration tests cover adapter behavior such as row locking, concurrent writes, and rollback. Simple modules keep a direct controller, service, and data-access flow. Transactional callers must pass the context across module boundaries, including catalog reads and inventory reservations.
+Workflow tests can exercise domain rules and use cases through test implementations of repository and transaction ports. PostgreSQL integration tests cover row locking, concurrent writes, and rollback. Foreign keys enforce integrity across the schema. Modules collaborate through public operations and RabbitMQ contracts. Physical fulfillment passes its transaction context to Product's stock reservation operation so the stock update and shipment commit together.
 
 ## Related files
 
 - [Module layout](../../design.md#module-layout)
 - [Transaction boundaries](../../design.md#transaction-boundaries)
-- [Class diagram](../../diagrams/class.md)
+- [Module diagram](../../diagrams/class.md)

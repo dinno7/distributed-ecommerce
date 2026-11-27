@@ -16,5 +16,5 @@ settings:
   forwardAuthorizationHeader: false
 
 docs: |-
-  Deletes the product saved by **Create Product** after the collection has used it for **Create Order**.
+  Deletes the product saved by **Create Product** and its inventory row. The order request uses the seeded catalog. If you substitute the new physical product into an order, wait for fulfillment before deleting it.
   Returns `204` with an empty body, `400` for a malformed UUID, or `404` for an unknown product.

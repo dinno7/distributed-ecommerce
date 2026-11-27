@@ -9,4 +9,5 @@ http:
   auth: inherit
 
 docs: |-
-  Filter by customerId or status. Orders are sorted newest first.
+  Returns `{ orders, page, per_page }` in `data`. Use `customerId` or `status` to filter. Results are sorted by creation time and ID descending.
+  The defaults are `page=1` and `per_page=10`. A page size can be 1–100.

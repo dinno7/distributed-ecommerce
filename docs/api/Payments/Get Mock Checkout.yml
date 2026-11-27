@@ -11,7 +11,7 @@ http:
 runtime:
   scripts:
     - type: before-request
-      code: if (!bru.getVar("payment_id")) bru.runner.skipRequest();
+      code: if (!bru.getCollectionVar("payment_id")) bru.runner.skipRequest();
 
 settings:
   encodeUrl: true
@@ -21,5 +21,5 @@ settings:
   forwardAuthorizationHeader: true
 
 docs: |-
-  Run **Get Latest Payment** until it saves `payment_id`. This route uses the server origin and matches the URL returned by the mock gateway.
+  Run **Get Latest Payment** until it saves `payment_id`. This request uses the API route. Wait for a non-null `checkoutUrl` as a readiness signal.
   Returns `200` with the checkout in `data`, including `paymentId`, `orderId`, `status`, `amountMinor`, and `currency`. An invalid UUID returns `400`. An unknown payment or a payment from another gateway returns `404`.

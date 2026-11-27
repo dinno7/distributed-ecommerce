@@ -15,4 +15,5 @@ http:
   auth: inherit
 
 docs: |-
-  Send an empty object to retry all eligible failed items. To retry one item, send its itemId. Reuse the same Idempotency-Key to replay the result.
+  For a `FULFILLMENT_FAILED` order, send `{}` to retry all eligible items or `{ "itemId": "<uuid>" }` for one. Only items failed with `OUT_OF_STOCK` can be retried.
+  Requires `Idempotency-Key`. A `202` returns `orderId`, `status: "FULFILLING"`, and `itemIds` in `data`. Reuse the same key and body to replay the result. An ineligible retry returns `409 RETRY_NOT_ELIGIBLE`.

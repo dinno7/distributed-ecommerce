@@ -1,6 +1,6 @@
 # ADR-[0000]: [Short Title of Solved Problem and Solution]
 
-- **Status:** [Proposed | Accepted | Rejected | Deprecated | Superseded by [ADR-0000](0000-filename.md)]
+- **Status:** [Proposed | Accepted | Rejected | Deprecated | Superseded by ADR-0000]
 - **Date:** YYYY-MM-DD
 
 ## Context

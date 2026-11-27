@@ -12,4 +12,4 @@ http:
   auth: inherit
 
 docs: |-
-  This server-sent events connection stays open and emits new audit records as they are stored.
+  This server-sent events connection emits new audit records inserted by the instance serving the stream. Each message carries the audit record ID and the same record shape as **List Events**. Use **List Events** for stored history.

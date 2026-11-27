@@ -14,7 +14,7 @@ We will use Prisma directly for data persistence and Prisma's transaction suppor
 ## Rationale
 
 - **Scope & speed:** Avoids mapping overhead and extra abstractions during a focused interview implementation.
-- **Native transaction ergonomics:** Prisma transactions work cleanly with relational queries and outbox/idempotency writes in one place.
+- **Native transaction ergonomics.** Prisma transactions work cleanly with relational queries and outbox writes in one place.
 - **Low switching risk:** In a short-lived assessment app, replacing the ORM is not a realistic driver.
 
 ## Alternatives considered

@@ -5,7 +5,7 @@
 
 ## Context
 
-The application exposes HTTP endpoints (`POST /orders`, `GET /orders`, `POST /orders/:id/retry`, `/health`, etc.) and processes asynchronous events/commands over RabbitMQ (`evt.*`, `cmd.*`) alongside Redis and PostgreSQL. Over-applying strict hexagonal/clean architecture boundaries across every module can create unnecessary indirection for standard CRUD and orchestration flows.
+The original proposal called for HTTP endpoints (`POST /orders`, `GET /orders`, `POST /orders/:id/retry`, `/health`, etc.) and asynchronous events and commands over RabbitMQ (`evt.*`, `cmd.*`) alongside Redis and PostgreSQL. Over-applying strict hexagonal/clean architecture boundaries across every module can create unnecessary indirection for standard CRUD and orchestration flows. The [current architecture](../../design.md) describes the implemented services and routes.
 
 ## Decision
 

@@ -9,4 +9,5 @@ http:
   auth: inherit
 
 docs: |-
-  Lists stored audit records, newest first. Use the returned nextCursor as the cursor query parameter to read the next page.
+  Returns `{ items, nextCursor }` in `data`, newest first. Each item contains `id`, `event` (the routing key), `createdAt`, and `payload`.
+  Use `page` and `per_page`, or pass the returned `nextCursor` as `cursor` to continue. The cursor takes precedence over the page offset.

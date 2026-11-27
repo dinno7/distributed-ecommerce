@@ -9,4 +9,4 @@ http:
   auth: inherit
 
 docs: |-
-  Returns the order, item statuses, latest payment, and shipments.
+  Returns the order summary, items, latest payment or null, and shipments in `data`. Monetary amounts are decimal strings. Items use `status`, `attempts`, and `failureCode` to describe their current state. The latest payment and shipments can be visible before Orders applies their events.
