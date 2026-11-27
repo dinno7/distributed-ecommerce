@@ -1,5 +1,8 @@
 enum OrderStatus {
   PENDING_PAYMENT
+  PAYMENT_FAILED
+  FULFILLING
+  FULFILLMENT_FAILED
   PAID
   PROCESSING
   COMPLETED
@@ -7,6 +10,8 @@ enum OrderStatus {
 }
 
 enum OrderItemStatus {
+  SKIPPED
+  SUCCEEDED
   PENDING
   QUEUED
   PROCESSING
@@ -14,41 +19,48 @@ enum OrderItemStatus {
   FAILED
 }
 
-
 model Order {
-  id          String      @id @db.Uuid
-  userId  String      @map("user_id") @db.Uuid
-  status      OrderStatus @default(PENDING_PAYMENT)
-  totalMinor  BigInt      @map("total_minor")
-  currency    String      @db.Char(3)
-  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+  id               String      @id @db.Uuid
+  userId           String      @map("user_id") @db.Uuid
+  status           OrderStatus @default(PENDING_PAYMENT)
+  paymentAttemptNo Int         @default(0) @map("payment_attempt_no")
+  totalMinor       BigInt      @map("total_minor")
+  currency         String      @db.Char(3)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
-  items       OrderItem[]
-  outbox      OrderOutbox[]
-  payments    Payment[]
+  items    OrderItem[]
+  outbox   OrderOutbox[]
+  payments Payment[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
   @@map("orders")
 }
 
 model OrderItem {
-  id             String          @id @db.Uuid
-  orderId        String          @map("order_id") @db.Uuid
-  productId      String          @map("product_id") @db.Uuid
-  productType    ProductType     @map("product_type")
-  quantity       Int
-  unitPriceMinor BigInt          @map("unit_price_minor")
-  status         OrderItemStatus @default(PENDING)
-  attempts       Int             @default(0)
-  claimedBy      String?         @map("claimed_by")
-  leaseExpiresAt DateTime?       @map("lease_expires_at") @db.Timestamptz
-  lastError      String?         @map("last_error")
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  id               String          @id @db.Uuid
+  orderId          String          @map("order_id") @db.Uuid
+  productId        String          @map("product_id") @db.Uuid
+  productType      ProductType     @map("product_type")
+  subscriptionDays Int?            @map("subscription_days")
+  quantity         Int
+  unitPriceMinor   BigInt          @map("unit_price_minor")
+  status           OrderItemStatus @default(PENDING)
+  attempts         Int             @default(0)
+  claimedBy        String?         @map("claimed_by")
+  leaseExpiresAt   DateTime?       @map("lease_expires_at") @db.Timestamptz
+  lastError        String?         @map("last_error")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 
-  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  attemptsLog  FulfillmentAttempt[]
+  digitalGrant DigitalGrant?
+  shipment     Shipment?
 
   @@index([orderId])
   @@index([productId])
@@ -65,7 +77,7 @@ enum OutboxStatus {
 model OrderOutbox {
   id            String       @id @db.Uuid
   orderId       String       @map("order_id") @db.Uuid
-  exchangeName    String       @map("exchange_name")
+  exchangeName  String       @map("exchange_name")
   routingKey    String       @map("routing_key")
   payload       Json         @db.JsonB
   status        OutboxStatus @default(PENDING)
@@ -74,7 +86,7 @@ model OrderOutbox {
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
   publishedAt   DateTime?    @map("published_at") @db.Timestamptz
 
-  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([status, nextAttemptAt])
   @@index([orderId])

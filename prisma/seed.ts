@@ -46,13 +46,7 @@ async function main() {
   for (const item of SEED_PRODUCTS) {
     await prisma.product.upsert({
       where: { id: item.id },
-      update: {
-        name: item.name,
-        type: item.type,
-        unitPriceMinor: item.unitPriceMinor,
-        subscriptionDays: item.subscriptionDays,
-        digitalMetadata: item.digitalMetadata ?? undefined,
-      },
+      update: {},
       create: {
         id: item.id,
         name: item.name,

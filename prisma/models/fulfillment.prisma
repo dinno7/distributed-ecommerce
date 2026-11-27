@@ -1,0 +1,54 @@
+model FulfillmentAttempt {
+  orderItemId String  @map("order_item_id") @db.Uuid
+  attemptNo   Int     @map("attempt_no")
+  errorCode   String? @map("error_code")
+
+  item OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@id([orderItemId, attemptNo])
+  @@map("fulfillment_attempts")
+}
+
+model DigitalGrant {
+  orderItemId String   @id @map("order_item_id") @db.Uuid
+  customerId  String   @map("customer_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  quantity    Int
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  item OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@map("digital_grants")
+}
+
+model Subscription {
+  customerId String   @map("customer_id") @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz
+
+  @@id([customerId, productId])
+  @@map("subscriptions")
+}
+
+model Shipment {
+  id          String   @id @db.Uuid
+  orderItemId String   @unique @map("order_item_id") @db.Uuid
+  quantity    Int
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  item OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@map("shipments")
+}
+
+model FulfillmentOutbox {
+  id            String   @id @db.Uuid
+  exchangeName  String   @map("exchange_name")
+  routingKey    String   @map("routing_key")
+  payload       Json     @db.JsonB
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([nextAttemptAt, id])
+  @@map("fulfillment_outbox")
+}
