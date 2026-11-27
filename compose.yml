@@ -2,7 +2,7 @@ name: distributed-ecommerce
 
 services:
   app:
-    image: ghcr.io/dinno7/distribute-ecommerce:latest
+    image: ghcr.io/dinno7/distributed-ecommerce:latest
     # pull_policy: build
     # build:
     #   context: .

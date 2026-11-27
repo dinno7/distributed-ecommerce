@@ -16,7 +16,7 @@ jobs:
       contents: read
       packages: write
     env:
-      IMAGE: ghcr.io/dinno7/distribute-ecommerce:${{ inputs.image_tag }}
+      IMAGE: ghcr.io/dinno7/distributed-ecommerce:${{ inputs.image_tag }}
     steps:
       - uses: actions/checkout@v6
         with:

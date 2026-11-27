@@ -17,7 +17,7 @@ The demo assumes trusted callers and simulates payment and fulfillment locally.
    cd distributed-ecommerce
    ```
 
-3. Start the stack. Compose is configured to pull `ghcr.io/dinno7/distribute-ecommerce:latest` from GitHub Container Registry. Compose provides the demo configuration on a fresh checkout, so you can start without creating a `.env` file. Make sure local ports `7000`, `5432`, `5672`, and `15672` are free.
+3. Start the stack. Compose is configured to pull `ghcr.io/dinno7/distributed-ecommerce:latest` from GitHub Container Registry. Compose provides the demo configuration on a fresh checkout, so you can start without creating a `.env` file. Make sure local ports `7000`, `5432`, `5672`, and `15672` are free.
 
    ```bash
    docker compose up -d
