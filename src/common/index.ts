@@ -14,4 +14,5 @@ export * from './ports/retrier.port';
 export * from './ports/transaction.port';
 export * from './contracts/messages';
 export * from './domain/value-objects/event-message.vo';
+export * from './sse.service';
 export * from './types';
