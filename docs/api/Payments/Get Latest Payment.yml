@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiv1}}/payments?orderId={{created_order_id}}"
+  url: '{{apiv1}}/payments?orderId={{created_order_id}}'
   auth: inherit
 
 runtime:
@@ -18,12 +18,12 @@ runtime:
         if (res.getStatus() === 200) {
           const payment = res.getBody().data;
           if (payment.paymentId && payment.status !== "PENDING") {
-            bru.setVar("payment_id", payment.paymentId);
+            bru.setCollectionVar("payment_id", payment.paymentId);
           } else {
             bru.deleteVar("payment_id");
           }
           if (payment.status === "FAILED") {
-            bru.setVar("failed_payment_id", payment.paymentId);
+            bru.setCollectionVar("failed_payment_id", payment.paymentId);
           }
         }
 

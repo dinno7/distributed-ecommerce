@@ -1,0 +1,18 @@
+info:
+  name: Retry Fulfillment
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: '{{apiv1}}/orders/{{created_order_id}}/retry'
+  headers:
+    - name: Idempotency-Key
+      value: '{{$randomUUID}}'
+  body:
+    type: json
+    data: '{}'
+  auth: inherit
+
+docs: |-
+  Send an empty object to retry all eligible failed items. To retry one item, send its itemId. Reuse the same Idempotency-Key to replay the result.

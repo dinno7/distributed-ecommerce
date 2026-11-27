@@ -1,0 +1,11 @@
+name: staging
+variables:
+  - name: server_url
+    value: http://des.dlrb.ir
+    description: HTTP origin used by the API and mock checkout.
+  - name: base_url
+    value: "{{server_url}}/api"
+    description: ""
+  - name: apiv1
+    value: "{{base_url}}/v1"
+    description: ""

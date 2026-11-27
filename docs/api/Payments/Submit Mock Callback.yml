@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiv1}}/payments/{{payment_id}}/callback"
+  url: '{{apiv1}}/payments/{{payment_id}}/callback'
   body:
     type: json
     data: |-
@@ -21,7 +21,7 @@ runtime:
     - type: after-response
       code: |-
         if (res.getStatus() === 200 && res.getBody().data.status === "FAILED") {
-          bru.setVar("failed_payment_id", res.getBody().data.paymentId);
+          bru.setCollectionVar("failed_payment_id", res.getBody().data.paymentId);
         }
 
 settings:

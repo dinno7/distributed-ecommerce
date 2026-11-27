@@ -5,10 +5,10 @@ info:
 
 http:
   method: POST
-  url: "{{apiv1}}/orders"
+  url: '{{apiv1}}/orders'
   headers:
     - name: Idempotency-Key
-      value: "{{$randomUUID}}"
+      value: '{{$randomUUID}}'
   body:
     type: json
     data: |-
@@ -25,7 +25,7 @@ runtime:
     - type: after-response
       code: |-
         if (res.getStatus() === 201) {
-          bru.setVar("created_order_id", res.getBody().data.id);
+          bru.setCollectionVar("created_order_id", res.getBody().data.id);
           bru.deleteVar("payment_id");
           bru.deleteVar("failed_payment_id");
         }

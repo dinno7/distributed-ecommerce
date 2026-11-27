@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiv1}}/products"
+  url: '{{apiv1}}/products'
   body:
     type: json
     data: |-
@@ -22,7 +22,7 @@ runtime:
     - type: after-response
       code: |-
         if (res.getStatus() === 201) {
-          bru.setVar("created_product_id", res.getBody().data.id);
+          bru.setCollectionVar("created_product_id", res.getBody().data.id);
         }
 
 settings:
