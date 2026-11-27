@@ -1,10 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import appConfig, { validate } from './env.validate';
+import { AuditModule } from './modules/audit/audit.module';
+import { FulfillmentModule } from './modules/fulfillment/fulfillment.module';
+import { OrderModule } from './modules/order/order.module';
+import { PaymentModule } from './modules/payment/payment.module';
 import { ProductModule } from './modules/product/product.module';
 import { PersistenceModule } from './common';
-import { OrderModule } from './modules/order/order.module';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { PrismaIdempotencyStore } from './common';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -17,8 +20,6 @@ import {
   orderPaymentQueue,
 } from './modules/order/presentations/rabbitmq/order-workflow.routes';
 
-import { PaymentModule } from './modules/payment/payment.module';
-import { AuditModule } from './modules/audit/audit.module';
 const workflowQueues = [
   // Preserve the existing payment queue declaration on upgrade.
   {
@@ -56,8 +57,9 @@ const workflowQueues = [
     MessagingModule.forRoot(workflowQueues),
     PersistenceModule,
     ProductModule,
-    OrderModule,
     PaymentModule,
+    FulfillmentModule,
+    OrderModule,
     AuditModule,
   ],
   controllers: [AppController],
