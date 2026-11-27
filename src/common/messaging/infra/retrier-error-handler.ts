@@ -90,6 +90,8 @@ export function createRetryErrorHandler(
   };
 }
 
+const retryLogger = new Logger('RabbitMQWorkflow');
+
 export function quorumRetryErrorHandler(
   channel: Channel,
   msg: ConsumeMessage,
@@ -97,6 +99,9 @@ export function quorumRetryErrorHandler(
 ): void {
   // Permanent domain/validation failures -> skip retries, go straight to DLQ
   if (error instanceof NonRetryableError) {
+    retryLogger.warn(
+      `Rejecting ${msg.fields.routingKey} (${msg.properties.messageId}): ${error.message}`,
+    );
     channel.reject(msg, false);
     return;
   }
@@ -108,31 +113,57 @@ export function quorumRetryErrorHandler(
   channel.reject(msg, true);
 }
 
-export function RabbitRetrieableSubscriber(
-  options: Omit<RabbitHandlerConfig, 'type'> & {
-    queue: string; // Make it require
-    maxRetriesCount?: number;
-    delayMs?: number;
-  },
+interface WorkflowRetryOptions {
+  maxRetriesCount?: number;
+  delayMs?: number;
+  rejectOnOverflow?: boolean;
+}
+
+export function workflowQueueOptions(
+  queue: string,
+  {
+    maxRetriesCount = 3,
+    delayMs = 5_000,
+    rejectOnOverflow = true,
+  }: WorkflowRetryOptions = {},
 ) {
-  options.maxRetriesCount ??= 3;
-  options.delayMs ??= 5_000;
+  return {
+    durable: true,
+    arguments: {
+      'x-queue-type': 'quorum',
+      'x-delayed-retry-type': 'all',
+      'x-dead-letter-strategy': 'at-least-once',
+      ...(rejectOnOverflow ? { 'x-overflow': 'reject-publish' } : {}),
+      'x-delayed-retry-min': delayMs,
+      'x-delayed-retry-max': delayMs * 12,
+      'x-delivery-limit': maxRetriesCount,
+      'x-dead-letter-exchange': EXCHANGES.DLX,
+      'x-dead-letter-routing-key': `${queue}.dlq`,
+    },
+  };
+}
+
+export function RabbitRetrieableSubscriber({
+  maxRetriesCount,
+  delayMs,
+  rejectOnOverflow,
+  ...options
+}: Omit<RabbitHandlerConfig, 'type'> & {
+  queue: string;
+} & WorkflowRetryOptions) {
+  const queueOptions = workflowQueueOptions(options.queue, {
+    maxRetriesCount,
+    delayMs,
+    rejectOnOverflow,
+  });
   const additionalOptions = {
     errorHandler: quorumRetryErrorHandler,
     queueOptions: {
-      ...(options?.queueOptions ? options.queueOptions : {}),
+      ...options.queueOptions,
+      ...queueOptions,
       arguments: {
-        ...(options?.queueOptions?.arguments
-          ? options.queueOptions.arguments
-          : {}),
-        'x-queue-type': 'quorum',
-        'x-delayed-retry-type': 'all',
-        'x-dead-letter-strategy': 'at-least-once',
-        'x-delayed-retry-min': options.delayMs, // 5s -> 10s -> 15s (linear backoff)
-        'x-delayed-retry-max': options.delayMs * 12, // Cap at this
-        'x-delivery-limit': options.maxRetriesCount, // Route to DLX after this
-        'x-dead-letter-exchange': EXCHANGES.DLX,
-        'x-dead-letter-routing-key': `${options.queue}.dlq`,
+        ...options.queueOptions?.arguments,
+        ...queueOptions.arguments,
       },
     },
   };

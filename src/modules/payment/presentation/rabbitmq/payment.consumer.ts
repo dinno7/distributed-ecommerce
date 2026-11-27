@@ -21,7 +21,7 @@ export class PaymentConsumer {
     exchange: EXCHANGES.MAIN,
     routingKey: OrderCreatedEvent.ROUTING_KEY,
     queue: QUEUES.PaymentProcess,
-    maxRetriesCount: 3,
+    rejectOnOverflow: false,
   })
   async onOrderCreated(payload: OrderCreatedEventPayload): Promise<void> {
     if (
