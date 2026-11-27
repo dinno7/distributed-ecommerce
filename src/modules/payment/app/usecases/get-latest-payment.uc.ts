@@ -1,25 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import type { UseCase } from '../../../../common/ports/usecase.port';
-import {
-  type PaymentFailureCode,
-  PaymentStatus,
-} from '../../domain/payment.entity';
+import type {
+  LatestPayment,
+  LatestPaymentQuery,
+} from '../../../../common/ports/latest-payment-query.port';
+import { PaymentStatus } from '../../domain/payment.entity';
 import { PaymentRepository } from '../ports/payment.repository';
 
-export interface LatestPayment {
-  paymentId: string | null;
-  status: PaymentStatus | 'PENDING';
-  checkoutUrl: string | null;
-  amountMinor: bigint;
-  currency: string;
-  failureCode?: PaymentFailureCode;
-}
-
 @Injectable()
-export class GetLatestPaymentUC implements UseCase<
-  string,
-  LatestPayment | null
-> {
+export class GetLatestPaymentUC
+  implements UseCase<string, LatestPayment | null>, LatestPaymentQuery
+{
   constructor(private readonly paymentRepo: PaymentRepository) {}
 
   async execute(orderId: string): Promise<LatestPayment | null> {

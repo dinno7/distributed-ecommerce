@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LatestPaymentQuery } from '../../common/ports/latest-payment-query.port';
 import { MessagePublisher } from '../../common/messaging/ports/message-publisher.port';
 import { PaymentCheckoutService } from './app/payment-checkout.service';
 import { PaymentGatewayRegistry } from './app/payment-gateway.registry';
@@ -27,6 +28,7 @@ import { PaymentConsumer } from './presentation/rabbitmq/payment.consumer';
     RetryPaymentUC,
     GetPaymentUC,
     GetLatestPaymentUC,
+    { provide: LatestPaymentQuery, useExisting: GetLatestPaymentUC },
     MockPaymentGateway,
     PaymentOutboxRelayRepositoryPrisma,
     {
@@ -49,6 +51,6 @@ import { PaymentConsumer } from './presentation/rabbitmq/payment.consumer';
       useClass: PaymentOutboxRepositoryPrisma,
     },
   ],
-  exports: [PaymentGatewayRegistry],
+  exports: [LatestPaymentQuery],
 })
 export class PaymentModule {}
