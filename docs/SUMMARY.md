@@ -23,3 +23,4 @@
   - [Use UUIDv7 for Workflow IDs](adl/adr/0003-use-in-app-uuidv7-id.md)
   - [Use Hexagonal Architecture for Order Processing](adl/adr/0004-use-selective-hexagonal-architecture.md)
   - [Initialize the database in the app container](adl/adr/0005-initialize-database-in-app-container.md)
+  - [Use in-process ports between modules](adl/adr/0006-use-in-process-ports-between-modules.md)
